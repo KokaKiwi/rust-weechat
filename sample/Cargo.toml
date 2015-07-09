@@ -1,0 +1,12 @@
+[package]
+name = "weechat-rust-sample-plugin"
+version = "0.1.0"
+authors = ["KokaKiwi <kokakiwi@kokakiwi.net>"]
+
+[lib]
+name = "weechat_rust_sample_plugin"
+crate-type = ["dylib"]
+
+[dependencies]
+weechat = { path = ".." }
+libc = "*"

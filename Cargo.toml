@@ -1,0 +1,8 @@
+[package]
+name = "weechat"
+version = "0.1.0"
+authors = ["KokaKiwi <kokakiwi@kokakiwi.net>"]
+description = "Weechat API bindings for Rust"
+
+[dependencies]
+libc = "*"
