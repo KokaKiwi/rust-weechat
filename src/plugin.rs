@@ -1,5 +1,5 @@
-use ffi::structs::t_weechat_plugin;
-use std::ffi::CString;
+use bindings::{t_weechat_plugin};
+use std::ffi::{CString};
 use std::ptr;
 
 pub struct WeechatPlugin {
@@ -25,20 +25,24 @@ impl WeechatPlugin {
     }
 
     pub fn log(&self, msg: &str) {
-        let log_printf = self.get().log_printf;
+        let log_printf = self.get().log_printf.unwrap();
 
         let fmt = CString::new("%s").unwrap();
         let msg = CString::new(msg).unwrap();
 
-        log_printf(fmt.as_ptr(), msg.as_ptr());
+        unsafe {
+            log_printf(fmt.as_ptr(), msg.as_ptr());
+        }
     }
 
     pub fn print(&self, msg: &str) {
-        let printf_date_tags = self.get().printf_date_tags;
+        let printf_date_tags = self.get().printf_date_tags.unwrap();
 
         let fmt = CString::new("%s").unwrap();
         let msg = CString::new(msg).unwrap();
 
-        printf_date_tags(ptr::null_mut(), 0, ptr::null(), fmt.as_ptr(), msg.as_ptr());
+        unsafe {
+            printf_date_tags(ptr::null_mut(), 0, ptr::null(), fmt.as_ptr(), msg.as_ptr());
+        }
     }
 }
