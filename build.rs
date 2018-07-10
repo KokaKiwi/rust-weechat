@@ -4,7 +4,7 @@ use std::env;
 use std::path::PathBuf;
 
 fn main() {
-    const INCLUDED_TYPES: &[&str] = &["t_weechat_plugin"];
+    const INCLUDED_TYPES: &[&str] = &["t_weechat_plugin", "t_gui_buffer"];
     const INCLUDED_VARS: &[&str] = &[
         "WEECHAT_PLUGIN_API_VERSION",
         "WEECHAT_RC_ERROR"

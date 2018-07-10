@@ -15,6 +15,7 @@ weechat_plugin!(
 
 fn init(plugin: WeechatPlugin, _args: Args) -> bool {
     plugin.print("Hello Rust!");
+    plugin.buffer_new("Test buffer");
 
     true
 }

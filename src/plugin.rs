@@ -1,4 +1,4 @@
-use bindings::{t_weechat_plugin};
+use bindings::{t_weechat_plugin, t_gui_buffer};
 use std::ffi::{CString};
 use std::ptr;
 
@@ -32,6 +32,14 @@ impl WeechatPlugin {
 
         unsafe {
             log_printf(fmt.as_ptr(), msg.as_ptr());
+        }
+    }
+
+    pub fn buffer_new(&self, name: &str) -> *mut t_gui_buffer {
+        let buf_new = self.get().buffer_new.unwrap();
+        let c_name = CString::new(name).unwrap();
+        unsafe {
+            buf_new(self.inner, c_name.as_ptr(), None, ptr::null_mut(), ptr::null_mut(), None, ptr::null_mut(), ptr::null_mut())
         }
     }
 
