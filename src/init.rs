@@ -1,5 +1,5 @@
 use libc::{c_int, c_char};
-use plugin::Weechat;
+use weechat::Weechat;
 use std::ffi::CStr;
 use std::ops::Index;
 
