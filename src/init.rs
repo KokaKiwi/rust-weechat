@@ -1,37 +1,66 @@
 use libc::{c_int, c_char};
 use plugin::WeechatPlugin;
-use bindings;
 use std::ffi::CStr;
 use std::ops::Index;
 
-extern "C" {
-    pub static weechat_plugin: i32;
-}
-
 #[macro_export]
-macro_rules! weechat_plugin_init(
-    ($init_fn:path) => {
+macro_rules! weechat_plugin(
+    ($plugin:ty, $($name:ident: $value:expr; $length:expr),+) => {
+        static mut __PLUGIN: Option<$plugin> = None;
+        #[no_mangle]
+        pub static mut weechat_plugin_api_version: [u8; $crate::bindings::WEECHAT_PLUGIN_API_VERSION_LENGTH]
+            = *$crate::bindings::WEECHAT_PLUGIN_API_VERSION;
+
         #[no_mangle]
         pub extern "C" fn weechat_plugin_init(plugin: *mut $crate::bindings::t_weechat_plugin,
-                                              argc: ::libc::c_int, argv: *mut *mut ::libc::c_char) -> ::libc::c_int {
-            return $crate::init::init(plugin, argc, argv, $init_fn);
+                                              argc: libc::c_int, argv: *mut *mut ::libc::c_char) -> libc::c_int {
+            let plugin = WeechatPlugin::from_ptr(plugin);
+            let args = Args {
+                argc: argc as u32,
+                argv: argv,
+            };
+            match <$plugin as $crate::Plugin>::init(plugin, args) {
+                Ok(p) => {
+                    unsafe {
+                        __PLUGIN = Some(p)
+                    }
+                    return $crate::bindings::WEECHAT_RC_OK;
+                }
+                Err(_e) => {
+                    return $crate::bindings::WEECHAT_RC_ERROR;
+                }
+            }
         }
+        #[no_mangle]
+        pub extern "C" fn weechat_plugin_end(_plugin: *mut $crate::bindings::t_weechat_plugin) -> ::libc::c_int {
+            unsafe {
+                // Invokes drop() on __PLUGIN, which should be used for cleanup.
+                __PLUGIN = None;
+            }
+
+            $crate::bindings::WEECHAT_RC_OK
+        }
+        $(
+            weechat_plugin!(@attribute $name, $value, $length);
+        )*
+
+    };
+
+    (@attribute $name:ident, $value:expr, $length:expr) => {
+        weechat_plugin_info!($name, $value, $length);
     };
 );
 
-#[macro_export]
-macro_rules! weechat_plugin_end(
-    ($end_fn:path) => {
-        #[no_mangle]
-        pub extern "C" fn weechat_plugin_end(plugin: *mut $crate::bindings::t_weechat_plugin) -> ::libc::c_int {
-            return $crate::init::end(plugin, $end_fn);
-        }
-    };
-);
+pub trait Plugin: Sized {
+    fn init(plugin: WeechatPlugin, args: Args) -> PluginResult<Self>;
+}
+
+pub struct Error(c_int);
+pub type PluginResult<T> = Result<T, Error>;
 
 pub struct Args {
-    argc: u32,
-    argv: *mut *mut c_char,
+    pub argc: u32,
+    pub argv: *mut *mut c_char,
 }
 
 impl Args {
@@ -53,38 +82,12 @@ impl Index<usize> for Args {
     }
 }
 
-pub fn init(plugin: *mut bindings::t_weechat_plugin,
-            argc: c_int, argv: *mut *mut c_char,
-            f: fn(plugin: WeechatPlugin, args: Args) -> bool) -> c_int {
-    let plugin = WeechatPlugin::from_ptr(plugin);
-    let args = Args {
-        argc: argc as u32,
-        argv: argv,
-    };
-    let result = f(plugin, args);
-
-    if result { bindings::WEECHAT_RC_OK } else { bindings::WEECHAT_RC_ERROR }
-}
-
-pub fn end(plugin: *mut bindings::t_weechat_plugin,
-            f: fn(plugin: WeechatPlugin) -> bool) -> c_int {
-    let plugin = WeechatPlugin::from_ptr(plugin);
-    let result = f(plugin);
-
-    if result { bindings::WEECHAT_RC_OK } else { bindings::WEECHAT_RC_ERROR }
-}
-
 #[macro_export]
 macro_rules! weechat_plugin_name(
     ($name:expr, $length:expr) => {
         #[allow(non_upper_case_globals)]
         #[no_mangle]
         pub static weechat_plugin_name: [u8; $length] = *$name;
-
-        #[allow(non_upper_case_globals)]
-        #[no_mangle]
-        pub static mut weechat_plugin_api_version: [u8; $crate::bindings::WEECHAT_PLUGIN_API_VERSION_LENGTH]
-            = *$crate::bindings::WEECHAT_PLUGIN_API_VERSION;
     }
 );
 
@@ -125,44 +128,20 @@ macro_rules! weechat_plugin_license(
 );
 
 #[macro_export]
-macro_rules! weechat_plugin_priority(
-    ($priority:expr) => {
-        #[allow(non_upper_case_globals)]
-        #[no_mangle]
-        pub static weechat_plugin_priority: ::libc::c_int = $priority;
-    }
-);
-
-#[macro_export]
-macro_rules! weenat_plugin_info(
-    (name: $name:expr; $length:expr) => {
+macro_rules! weechat_plugin_info(
+    (name, $name:expr, $length:expr) => {
         weechat_plugin_name!($name, $length);
     };
-    (author: $author:expr; $length:expr) => {
+    (author, $author:expr, $length:expr) => {
         weechat_plugin_author!($author, $length);
     };
-    (description: $description:expr; $length:expr) => {
+    (description, $description:expr, $length:expr) => {
         weechat_plugin_description!($description, $length);
     };
-    (version: $version:expr; $length:expr) => {
+    (version, $version:expr, $length:expr) => {
         weechat_plugin_version!($version, $length);
     };
-    (license: $license:expr; $length:expr) => {
+    (license, $license:expr, $length:expr) => {
         weechat_plugin_license!($license, $length);
-    };
-    (priority: $priority:expr) => {
-        weechat_plugin_priority!($priority, $length);
-    };
-);
-
-#[macro_export]
-macro_rules! weechat_plugin(
-    ($($name:ident: $value:expr; $length:expr),+) => {
-        $(
-            weenat_plugin_info!($name: $value; $length);
-        )+
-    };
-    ($($name:ident: $value:expr; $length:expr),+,) => {
-        weechat_plugin!($($name: $value; $length),+);
     };
 );

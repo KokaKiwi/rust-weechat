@@ -1,7 +1,10 @@
 [package]
 name = "weechat-rust-sample-plugin"
 version = "0.1.0"
-authors = ["KokaKiwi <kokakiwi@kokakiwi.net>"]
+authors = [
+    "KokaKiwi <kokakiwi@kokakiwi.net>",
+    "Damir Jelić <poljar@termina.org.uk>"
+]
 
 [lib]
 name = "weechat_rust_sample_plugin"
