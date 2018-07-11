@@ -15,7 +15,7 @@ macro_rules! weechat_plugin(
         pub extern "C" fn weechat_plugin_init(plugin: *mut $crate::bindings::t_weechat_plugin,
                                               argc: libc::c_int, argv: *mut *mut ::libc::c_char) -> libc::c_int {
             let plugin = Weechat::from_ptr(plugin);
-            let args = Args {
+            let args = WeechatPluginArgs {
                 argc: argc as u32,
                 argv: argv,
             };
@@ -52,24 +52,24 @@ macro_rules! weechat_plugin(
 );
 
 pub trait WeechatPlugin: Sized {
-    fn init(weechat: Weechat, args: Args) -> WeechatResult<Self>;
+    fn init(weechat: Weechat, args: WeechatPluginArgs) -> WeechatResult<Self>;
 }
 
 pub struct Error(c_int);
 pub type WeechatResult<T> = Result<T, Error>;
 
-pub struct Args {
+pub struct WeechatPluginArgs {
     pub argc: u32,
     pub argv: *mut *mut c_char,
 }
 
-impl Args {
+impl WeechatPluginArgs {
     pub fn len(&self) -> usize {
         self.argc as usize
     }
 }
 
-impl Index<usize> for Args {
+impl Index<usize> for WeechatPluginArgs {
     type Output = CStr;
 
     fn index<'a>(&'a self, index: usize) -> &'a CStr {
