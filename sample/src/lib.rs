@@ -9,8 +9,8 @@ struct SamplePlugin {
     weechat: Weechat
 }
 
-impl weechat::Plugin for SamplePlugin {
-    fn init(weechat: Weechat, _args: Args) -> weechat::init::PluginResult<Self> {
+impl weechat::WeechatPlugin for SamplePlugin {
+    fn init(weechat: Weechat, _args: Args) -> weechat::WeechatResult<Self> {
         weechat.print("Hello Rust!");
         weechat.buffer_new("Test buffer");
         Ok(SamplePlugin {

@@ -19,7 +19,7 @@ macro_rules! weechat_plugin(
                 argc: argc as u32,
                 argv: argv,
             };
-            match <$plugin as $crate::Plugin>::init(plugin, args) {
+            match <$plugin as $crate::WeechatPlugin>::init(plugin, args) {
                 Ok(p) => {
                     unsafe {
                         __PLUGIN = Some(p)
@@ -51,12 +51,12 @@ macro_rules! weechat_plugin(
     };
 );
 
-pub trait Plugin: Sized {
-    fn init(weechat: Weechat, args: Args) -> PluginResult<Self>;
+pub trait WeechatPlugin: Sized {
+    fn init(weechat: Weechat, args: Args) -> WeechatResult<Self>;
 }
 
 pub struct Error(c_int);
-pub type PluginResult<T> = Result<T, Error>;
+pub type WeechatResult<T> = Result<T, Error>;
 
 pub struct Args {
     pub argc: u32,

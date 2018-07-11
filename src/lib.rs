@@ -5,5 +5,5 @@ pub mod bindings;
 pub mod weechat;
 
 pub use weechat::Weechat;
-pub use init::Plugin;
-pub use init::PluginResult;
+pub use init::WeechatPlugin;
+pub use init::WeechatResult;
