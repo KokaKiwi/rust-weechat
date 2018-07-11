@@ -2,26 +2,26 @@
 extern crate weechat;
 extern crate libc;
 
-use weechat::WeechatPlugin;
+use weechat::Weechat;
 use weechat::init::Args;
 
 struct SamplePlugin {
-    weechat_plugin: WeechatPlugin
+    weechat: Weechat
 }
 
 impl weechat::Plugin for SamplePlugin {
-    fn init(plugin: WeechatPlugin, _args: Args) -> weechat::init::PluginResult<Self> {
-        plugin.print("Hello Rust!");
-        plugin.buffer_new("Test buffer");
+    fn init(weechat: Weechat, _args: Args) -> weechat::init::PluginResult<Self> {
+        weechat.print("Hello Rust!");
+        weechat.buffer_new("Test buffer");
         Ok(SamplePlugin {
-            weechat_plugin: plugin
+            weechat: weechat
         })
     }
 }
 
 impl Drop for SamplePlugin {
     fn drop(&mut self) {
-        self.weechat_plugin.print("Bye rust!");
+        self.weechat.print("Bye rust!");
     }
 }
 

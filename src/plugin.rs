@@ -2,21 +2,21 @@ use bindings::{t_weechat_plugin, t_gui_buffer};
 use std::ffi::{CString};
 use std::ptr;
 
-pub struct WeechatPlugin {
+pub struct Weechat {
     inner: *mut t_weechat_plugin,
 }
 
-impl WeechatPlugin {
-    pub fn from_ptr(inner: *mut t_weechat_plugin) -> WeechatPlugin {
+impl Weechat {
+    pub fn from_ptr(inner: *mut t_weechat_plugin) -> Weechat {
         assert!(!inner.is_null());
 
-        WeechatPlugin {
+        Weechat {
             inner: inner,
         }
     }
 }
 
-impl WeechatPlugin {
+impl Weechat {
     #[inline]
     fn get(&self) -> &t_weechat_plugin {
         unsafe {

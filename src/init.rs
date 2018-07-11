@@ -1,5 +1,5 @@
 use libc::{c_int, c_char};
-use plugin::WeechatPlugin;
+use plugin::Weechat;
 use std::ffi::CStr;
 use std::ops::Index;
 
@@ -14,7 +14,7 @@ macro_rules! weechat_plugin(
         #[no_mangle]
         pub extern "C" fn weechat_plugin_init(plugin: *mut $crate::bindings::t_weechat_plugin,
                                               argc: libc::c_int, argv: *mut *mut ::libc::c_char) -> libc::c_int {
-            let plugin = WeechatPlugin::from_ptr(plugin);
+            let plugin = Weechat::from_ptr(plugin);
             let args = Args {
                 argc: argc as u32,
                 argv: argv,
@@ -52,7 +52,7 @@ macro_rules! weechat_plugin(
 );
 
 pub trait Plugin: Sized {
-    fn init(plugin: WeechatPlugin, args: Args) -> PluginResult<Self>;
+    fn init(weechat: Weechat, args: Args) -> PluginResult<Self>;
 }
 
 pub struct Error(c_int);
