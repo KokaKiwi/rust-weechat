@@ -2,16 +2,22 @@
 extern crate weechat;
 extern crate libc;
 
-use weechat::{Weechat, WeechatPlugin, WeechatPluginArgs, WeechatResult};
+use weechat::{Weechat, WeechatPlugin, WeechatPluginArgs, WeechatResult, Buffer};
 
 struct SamplePlugin {
     weechat: Weechat
 }
 
+fn input_cb(buffer: Buffer, input: &str) {
+    buffer.print(input);
+}
+
 impl WeechatPlugin for SamplePlugin {
     fn init(weechat: Weechat, _args: WeechatPluginArgs) -> WeechatResult<Self> {
         weechat.print("Hello Rust!");
-        weechat.buffer_new("Test buffer");
+        let buffer = weechat.buffer_new("Test buffer", Some(input_cb));
+        let _ = weechat.buffer_new("Test buffer 2", None);
+        buffer.print("Hello buffer");
         Ok(SamplePlugin {
             weechat: weechat
         })
