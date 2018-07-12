@@ -45,6 +45,19 @@ impl Buffer {
         }
 
     }
+
+    pub fn add_nick(&self, nick: &str) {
+        let weechat = Weechat::from_ptr(self.weechat);
+
+        let c_nick = CString::new(nick).unwrap();
+        let color = CString::new("green").unwrap();
+        let add_nick = weechat.get().nicklist_add_nick.unwrap();
+
+        unsafe {
+            add_nick(self.ptr, ptr::null_mut(), c_nick.as_ptr(), color.as_ptr(), ptr::null_mut(), ptr::null_mut(), 1);
+        }
+
+    }
 }
 
 impl Weechat {
@@ -145,6 +158,14 @@ impl Weechat {
                 pointer_ref as *const _ as *const c_void,
                 ptr::null_mut()
             )
+        };
+
+        let buffer_set = self.get().buffer_set.unwrap();
+        let option = CString::new("nicklist").unwrap();
+        let value = CString::new("1").unwrap();
+
+        unsafe {
+            buffer_set(buf_ptr, option.as_ptr(), value.as_ptr())
         };
 
         Buffer {

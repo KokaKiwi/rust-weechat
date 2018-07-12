@@ -3,6 +3,7 @@ extern crate weechat;
 extern crate libc;
 
 use weechat::{Weechat, WeechatPlugin, WeechatPluginArgs, WeechatResult, Buffer};
+use std::time::Instant;
 
 struct SamplePlugin {
     weechat: Weechat
@@ -15,9 +16,25 @@ fn input_cb(buffer: Buffer, input: &str) {
 impl WeechatPlugin for SamplePlugin {
     fn init(weechat: Weechat, _args: WeechatPluginArgs) -> WeechatResult<Self> {
         weechat.print("Hello Rust!");
+
         let buffer = weechat.buffer_new("Test buffer", Some(input_cb));
         let _ = weechat.buffer_new("Test buffer 2", None);
-        buffer.print("Hello buffer");
+        buffer.print("Hello test buffer");
+
+        let n = 20000;
+
+        let now = Instant::now();
+
+        for nick_number in 0..n {
+            buffer.add_nick(&format!("nick_{}", &nick_number.to_string()));
+        }
+
+        buffer.print(&format!(
+            "Elapsed time for {} nick additions: {}.{}s.",
+            &n.to_string(),
+            &now.elapsed().as_secs().to_string(),
+            &now.elapsed().subsec_millis().to_string())
+        );
         Ok(SamplePlugin {
             weechat: weechat
         })
