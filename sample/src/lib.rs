@@ -9,16 +9,24 @@ struct SamplePlugin {
     weechat: Weechat
 }
 
-fn input_cb(buffer: Buffer, input: &str) {
-    buffer.print(input);
+fn input_cb(data: &Option<&str>, buffer: Buffer, input: &str) {
+    match data {
+        Some(x) => buffer.print(x),
+        None => buffer.print(input),
+    };
+}
+
+fn close_cb(buffer: Buffer) {
+    let w = buffer.get_weechat();
+    w.print("Closing buffer")
 }
 
 impl WeechatPlugin for SamplePlugin {
     fn init(weechat: Weechat, _args: WeechatPluginArgs) -> WeechatResult<Self> {
         weechat.print("Hello Rust!");
 
-        let buffer = weechat.buffer_new("Test buffer", Some(input_cb));
-        let _ = weechat.buffer_new("Test buffer 2", None);
+        static input: &'static Option<&str> = &Some("hello");
+        let buffer = weechat.buffer_new::<&str>("Test buffer", Some(input_cb), input, Some(close_cb));
         buffer.print("Hello test buffer");
 
         let n = 20000;

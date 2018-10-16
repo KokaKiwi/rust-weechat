@@ -13,9 +13,10 @@ pub struct Buffer {
     ptr: *mut t_gui_buffer
 }
 
-struct BufferPointers {
+struct BufferPointers<'a, T: 'a> {
     weechat: *mut t_weechat_plugin,
-    input_cb: Option<fn(Buffer, &str)>,
+    input_cb: Option<fn(&Option<T>, Buffer, &str)>,
+    input_cb_data: &'a Option<T>,
     close_cb: Option<fn(Buffer)>
 }
 
@@ -89,38 +90,45 @@ impl Weechat {
         }
     }
 
-    pub fn buffer_new(&self, name: &str, input_cb: Option<fn (Buffer, &str)>) -> Buffer {
-        unsafe extern "C" fn c_input_cb(pointer: *const c_void,
+    pub fn buffer_new<T>(
+        &self,
+        name: &str,
+        input_cb: Option<fn (&Option<T>, Buffer, &str)>,
+        input_cb_data: &'static Option<T>,
+        close_cb: Option<fn (Buffer)>
+    ) -> Buffer {
+        unsafe extern "C" fn c_input_cb<T>(pointer: *const c_void,
                                _data: *mut c_void,
                                buffer: *mut t_gui_buffer,
                                input_data: *const c_char)
                                -> c_int {
             let input_data = CStr::from_ptr(input_data).to_str();
 
-            let pointers: &mut BufferPointers = { &mut *(pointer as *mut BufferPointers) };
+            let pointers: &mut BufferPointers<T> = { &mut *(pointer as *mut BufferPointers<T>) };
 
             let input_data = match input_data {
                 Ok(x) => x,
                 Err(_) => return WEECHAT_RC_ERROR,
             };
 
-            let buffer = Buffer { weechat: pointers.weechat, ptr: buffer };
+            let buffer = Buffer::from_ptr(pointers.weechat, buffer);
+            let data = pointers.input_cb_data;
 
             match pointers.input_cb {
-                Some(callback) => callback(buffer, input_data),
+                Some(callback) => callback(data, buffer, input_data),
                 None => {}
             };
 
             WEECHAT_RC_OK
         }
 
-        unsafe extern "C" fn c_close_cb(pointer: *const c_void,
+        unsafe extern "C" fn c_close_cb<T>(pointer: *const c_void,
                                _data: *mut c_void,
                                buffer: *mut t_gui_buffer)
                                -> c_int {
             // We use from_raw() here so that the box get's freed at the end of this scope.
-            let pointers = Box::from_raw(pointer as *mut BufferPointers);
-            let buffer = Buffer { weechat: pointers.weechat, ptr: buffer };
+            let pointers = Box::from_raw(pointer as *mut BufferPointers<String>);
+            let buffer = Buffer::from_ptr(pointers.weechat, buffer);
 
             match pointers.close_cb {
                 Some(callback) => callback(buffer),
@@ -129,21 +137,22 @@ impl Weechat {
             WEECHAT_RC_OK
         }
 
-        // We create a box and use leak with a static lifetime to stop rust from freeing our data,
+        // We create a box and use leak to stop rust from freeing our data,
         // we are giving weechat ownership over the data and will free it in the buffer close
         // callback.
-        let pointers = Box::new(BufferPointers {
+        let pointers = Box::new(BufferPointers::<T> {
             weechat: self.inner,
             input_cb: input_cb,
-            close_cb: None
+            input_cb_data: input_cb_data,
+            close_cb: close_cb
         });
-        let pointer_ref: &'static mut BufferPointers = Box::leak(pointers);
+        let pointer_ref: &BufferPointers<T> = Box::leak(pointers);
 
         let buf_new = self.get().buffer_new.unwrap();
         let c_name = CString::new(name).unwrap();
 
         let c_input_cb: Option<WeechatInputCbT> = match input_cb {
-                Some(_) => Some(c_input_cb),
+                Some(_) => Some(c_input_cb::<T>),
                 None => None
             };
 
@@ -154,7 +163,7 @@ impl Weechat {
                 c_input_cb,
                 pointer_ref as *const _ as *const c_void,
                 ptr::null_mut(),
-                Some(c_close_cb),
+                Some(c_close_cb::<T>),
                 pointer_ref as *const _ as *const c_void,
                 ptr::null_mut()
             )
