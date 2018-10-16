@@ -2,7 +2,14 @@
 extern crate weechat;
 extern crate libc;
 
-use weechat::{Weechat, WeechatPlugin, WeechatPluginArgs, WeechatResult, Buffer};
+use weechat::{
+    Weechat,
+    WeechatPlugin,
+    WeechatPluginArgs,
+    WeechatResult,
+    Buffer,
+    Nick
+};
 use std::time::Instant;
 
 struct SamplePlugin {
@@ -29,12 +36,16 @@ impl WeechatPlugin for SamplePlugin {
         let buffer = weechat.buffer_new::<&str>("Test buffer", Some(input_cb), input, Some(close_cb));
         buffer.print("Hello test buffer");
 
-        let n = 20000;
+        let n = 100;
 
         let now = Instant::now();
 
         for nick_number in 0..n {
-            buffer.add_nick(&format!("nick_{}", &nick_number.to_string()));
+            let mut nick = Nick {
+                name: &format!("nick_{}", &nick_number.to_string()),
+                ..Default::default()
+            };
+            buffer.add_nick(&mut nick);
         }
 
         buffer.print(&format!(

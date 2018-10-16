@@ -4,13 +4,9 @@ use std::env;
 use std::path::PathBuf;
 
 fn main() {
-    const INCLUDED_TYPES: &[&str] = &["t_weechat_plugin", "t_gui_buffer"];
-    const INCLUDED_VARS: &[&str] = &[
-        "WEECHAT_PLUGIN_API_VERSION",
-        "WEECHAT_RC_ERROR"
-    ];
-    let mut builder = bindgen::Builder::default()
-        .rustfmt_bindings(true);
+    const INCLUDED_TYPES: &[&str] = &["t_weechat_plugin", "t_gui_buffer", "t_gui_nick"];
+    const INCLUDED_VARS: &[&str] = &["WEECHAT_PLUGIN_API_VERSION", "WEECHAT_RC_ERROR"];
+    let mut builder = bindgen::Builder::default().rustfmt_bindings(true);
 
     builder = builder.header("src/wrapper.h");
 

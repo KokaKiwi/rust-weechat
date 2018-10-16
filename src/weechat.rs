@@ -1,4 +1,10 @@
-use bindings::{t_weechat_plugin, t_gui_buffer, WEECHAT_RC_OK, WEECHAT_RC_ERROR};
+use bindings::{
+    t_weechat_plugin,
+    t_gui_buffer,
+    t_gui_nick,
+    WEECHAT_RC_OK,
+    WEECHAT_RC_ERROR
+};
 use std::ffi::{CStr, CString};
 use libc::{c_char, c_int};
 use std::os::raw::c_void;
@@ -11,6 +17,16 @@ pub struct Weechat {
 pub struct Buffer {
     weechat: *mut t_weechat_plugin,
     ptr: *mut t_gui_buffer
+}
+
+pub struct Nick<'a> {
+    pub ptr: Option<*mut t_gui_nick>,
+    pub buf_ptr: Option<*mut t_gui_buffer>,
+    pub name: &'a str,
+    pub color: &'a str,
+    pub prefix: &'a str,
+    pub prefix_color: &'a str,
+    pub visible: bool,
 }
 
 struct BufferPointers<'a, T: 'a> {
@@ -26,6 +42,25 @@ type WeechatInputCbT = unsafe extern "C" fn(
     buffer: *mut t_gui_buffer,
     input_data: *const c_char
 ) -> c_int;
+
+impl<'a> Nick<'a> {
+    fn from_ptr(ptr: *mut t_gui_nick, buf_ptr: *mut t_gui_nick) {
+    }
+}
+
+impl<'a> Default for Nick<'a> {
+    fn default() -> Nick<'a> {
+        Nick {
+            ptr: None,
+            buf_ptr: None,
+            name: "",
+            color: "",
+            prefix: "",
+            prefix_color: "",
+            visible: true
+        }
+    }
+}
 
 impl Buffer {
     pub fn from_ptr(weechat_ptr: *mut t_weechat_plugin, buffer_ptr: *mut t_gui_buffer) -> Buffer {
@@ -47,17 +82,19 @@ impl Buffer {
 
     }
 
-    pub fn add_nick(&self, nick: &str) {
+    pub fn add_nick(&self, nick: &mut Nick) {
         let weechat = Weechat::from_ptr(self.weechat);
 
-        let c_nick = CString::new(nick).unwrap();
+        let c_nick = CString::new(nick.name).unwrap();
         let color = CString::new("green").unwrap();
         let add_nick = weechat.get().nicklist_add_nick.unwrap();
 
-        unsafe {
-            add_nick(self.ptr, ptr::null_mut(), c_nick.as_ptr(), color.as_ptr(), ptr::null_mut(), ptr::null_mut(), 1);
-        }
+        let nick_ptr = unsafe {
+            add_nick(self.ptr, ptr::null_mut(), c_nick.as_ptr(), color.as_ptr(), ptr::null_mut(), ptr::null_mut(), 1)
+        };
 
+        nick.ptr = Some(nick_ptr);
+        nick.buf_ptr = Some(self.ptr);
     }
 }
 
