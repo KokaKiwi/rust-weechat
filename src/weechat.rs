@@ -29,11 +29,13 @@ pub struct Nick<'a> {
     pub visible: bool,
 }
 
-struct BufferPointers<'a, T: 'a> {
+struct BufferPointers<'a, A: 'a, B, C: 'a> {
     weechat: *mut t_weechat_plugin,
-    input_cb: Option<fn(&Option<T>, Buffer, &str)>,
-    input_cb_data: &'a Option<T>,
-    close_cb: Option<fn(Buffer)>
+    input_cb: Option<fn(&Option<A>, &mut Option<B>, Buffer, &str)>,
+    input_data: Option<B>,
+    input_data_ref: &'a Option<A>,
+    close_cb: Option<fn(&Option<C>, Buffer)>,
+    close_cb_data: &'a Option<C>,
 }
 
 type WeechatInputCbT = unsafe extern "C" fn(
@@ -68,6 +70,10 @@ impl Buffer {
             weechat: weechat_ptr,
             ptr: buffer_ptr
         }
+    }
+
+    pub fn get_weechat(self) -> Weechat {
+        Weechat::from_ptr(self.weechat)
     }
 
     pub fn print(&self, message: &str) {
@@ -127,21 +133,23 @@ impl Weechat {
         }
     }
 
-    pub fn buffer_new<T>(
+    pub fn buffer_new<A, B, C>(
         &self,
         name: &str,
-        input_cb: Option<fn (&Option<T>, Buffer, &str)>,
-        input_cb_data: &'static Option<T>,
-        close_cb: Option<fn (Buffer)>
+        input_cb: Option<fn (&Option<A>, &mut Option<B>, Buffer, &str)>,
+        input_data_ref: &'static Option<A>,
+        input_data: Option<B>,
+        close_cb: Option<fn (&Option<C>, Buffer)>,
+        close_cb_data: &'static Option<C>
     ) -> Buffer {
-        unsafe extern "C" fn c_input_cb<T>(pointer: *const c_void,
+        unsafe extern "C" fn c_input_cb<A, B, C>(pointer: *const c_void,
                                _data: *mut c_void,
                                buffer: *mut t_gui_buffer,
                                input_data: *const c_char)
                                -> c_int {
             let input_data = CStr::from_ptr(input_data).to_str();
 
-            let pointers: &mut BufferPointers<T> = { &mut *(pointer as *mut BufferPointers<T>) };
+            let pointers: &mut BufferPointers<A, B, C> = { &mut *(pointer as *mut BufferPointers<A, B, C>) };
 
             let input_data = match input_data {
                 Ok(x) => x,
@@ -149,26 +157,29 @@ impl Weechat {
             };
 
             let buffer = Buffer::from_ptr(pointers.weechat, buffer);
-            let data = pointers.input_cb_data;
+            let data_ref = pointers.input_data_ref;
+            let data = &mut pointers.input_data;
 
             match pointers.input_cb {
-                Some(callback) => callback(data, buffer, input_data),
+                Some(callback) => callback(data_ref, data, buffer, input_data),
                 None => {}
             };
 
             WEECHAT_RC_OK
         }
 
-        unsafe extern "C" fn c_close_cb<T>(pointer: *const c_void,
+        unsafe extern "C" fn c_close_cb<A, B, C>(pointer: *const c_void,
                                _data: *mut c_void,
                                buffer: *mut t_gui_buffer)
                                -> c_int {
             // We use from_raw() here so that the box get's freed at the end of this scope.
-            let pointers = Box::from_raw(pointer as *mut BufferPointers<String>);
+            let pointers = Box::from_raw(pointer as *mut BufferPointers<A, B, C>);
             let buffer = Buffer::from_ptr(pointers.weechat, buffer);
 
+            let data_ref = pointers.close_cb_data;
+
             match pointers.close_cb {
-                Some(callback) => callback(buffer),
+                Some(callback) => callback(data_ref, buffer),
                 None => {}
             };
             WEECHAT_RC_OK
@@ -177,19 +188,21 @@ impl Weechat {
         // We create a box and use leak to stop rust from freeing our data,
         // we are giving weechat ownership over the data and will free it in the buffer close
         // callback.
-        let pointers = Box::new(BufferPointers::<T> {
+        let buffer_pointers = Box::new(BufferPointers::<A, B, C> {
             weechat: self.inner,
             input_cb: input_cb,
-            input_cb_data: input_cb_data,
-            close_cb: close_cb
+            input_data: input_data,
+            input_data_ref: input_data_ref,
+            close_cb: close_cb,
+            close_cb_data: close_cb_data,
         });
-        let pointer_ref: &BufferPointers<T> = Box::leak(pointers);
+        let buffer_pointers_ref: &BufferPointers<A, B, C> = Box::leak(buffer_pointers);
 
         let buf_new = self.get().buffer_new.unwrap();
         let c_name = CString::new(name).unwrap();
 
         let c_input_cb: Option<WeechatInputCbT> = match input_cb {
-                Some(_) => Some(c_input_cb::<T>),
+                Some(_) => Some(c_input_cb::<A, B, C>),
                 None => None
             };
 
@@ -198,10 +211,10 @@ impl Weechat {
                 self.inner,
                 c_name.as_ptr(),
                 c_input_cb,
-                pointer_ref as *const _ as *const c_void,
+                buffer_pointers_ref as *const _ as *const c_void,
                 ptr::null_mut(),
-                Some(c_close_cb::<T>),
-                pointer_ref as *const _ as *const c_void,
+                Some(c_close_cb::<A, B, C>),
+                buffer_pointers_ref as *const _ as *const c_void,
                 ptr::null_mut()
             )
         };

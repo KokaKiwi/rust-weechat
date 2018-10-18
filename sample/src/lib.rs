@@ -16,14 +16,19 @@ struct SamplePlugin {
     weechat: Weechat
 }
 
-fn input_cb(data: &Option<&str>, buffer: Buffer, input: &str) {
+fn input_cb(data_ref: &Option<&str>, data: &mut Option<String>, buffer: Buffer, input: &str) {
     match data {
-        Some(x) => buffer.print(x),
+        Some(x) => {
+            buffer.print(x);
+            if x == "Hello" {
+                x.push_str(" world.");
+            }
+        },
         None => buffer.print(input),
     };
 }
 
-fn close_cb(buffer: Buffer) {
+fn close_cb(_data: &Option<&str>, buffer: Buffer) {
     let w = buffer.get_weechat();
     w.print("Closing buffer")
 }
@@ -32,8 +37,15 @@ impl WeechatPlugin for SamplePlugin {
     fn init(weechat: Weechat, _args: WeechatPluginArgs) -> WeechatResult<Self> {
         weechat.print("Hello Rust!");
 
-        static input: &'static Option<&str> = &Some("hello");
-        let buffer = weechat.buffer_new::<&str>("Test buffer", Some(input_cb), input, Some(close_cb));
+        static INPUT: Option<&str> = Some("hello");
+        let buffer = weechat.buffer_new(
+            "Test buffer",
+            Some(input_cb),
+            &INPUT,
+            Some("Hello".to_owned()),
+            Some(close_cb),
+            &None
+        );
         buffer.print("Hello test buffer");
 
         let n = 100;
@@ -54,6 +66,7 @@ impl WeechatPlugin for SamplePlugin {
             &now.elapsed().as_secs().to_string(),
             &now.elapsed().subsec_millis().to_string())
         );
+
         Ok(SamplePlugin {
             weechat: weechat
         })
