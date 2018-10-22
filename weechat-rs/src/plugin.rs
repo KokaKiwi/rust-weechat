@@ -3,16 +3,18 @@ use weechat::Weechat;
 use std::ffi::CStr;
 use std::ops::Index;
 
+extern crate weechat_sys;
+
 #[macro_export]
 macro_rules! weechat_plugin(
     ($plugin:ty, $($name:ident: $value:expr; $length:expr),+) => {
         static mut __PLUGIN: Option<$plugin> = None;
         #[no_mangle]
-        pub static mut weechat_plugin_api_version: [u8; $crate::bindings::WEECHAT_PLUGIN_API_VERSION_LENGTH]
-            = *$crate::bindings::WEECHAT_PLUGIN_API_VERSION;
+        pub static mut weechat_plugin_api_version: [u8; weechat_sys::WEECHAT_PLUGIN_API_VERSION_LENGTH]
+            = *weechat_sys::WEECHAT_PLUGIN_API_VERSION;
 
         #[no_mangle]
-        pub extern "C" fn weechat_plugin_init(plugin: *mut $crate::bindings::t_weechat_plugin,
+        pub extern "C" fn weechat_plugin_init(plugin: *mut weechat_sys::t_weechat_plugin,
                                               argc: libc::c_int, argv: *mut *mut ::libc::c_char) -> libc::c_int {
             let plugin = Weechat::from_ptr(plugin);
             let args = WeechatPluginArgs {
@@ -24,21 +26,21 @@ macro_rules! weechat_plugin(
                     unsafe {
                         __PLUGIN = Some(p)
                     }
-                    return $crate::bindings::WEECHAT_RC_OK;
+                    return weechat_sys::WEECHAT_RC_OK;
                 }
                 Err(_e) => {
-                    return $crate::bindings::WEECHAT_RC_ERROR;
+                    return weechat_sys::WEECHAT_RC_ERROR;
                 }
             }
         }
         #[no_mangle]
-        pub extern "C" fn weechat_plugin_end(_plugin: *mut $crate::bindings::t_weechat_plugin) -> ::libc::c_int {
+        pub extern "C" fn weechat_plugin_end(_plugin: *mut weechat_sys::t_weechat_plugin) -> ::libc::c_int {
             unsafe {
                 // Invokes drop() on __PLUGIN, which should be used for cleanup.
                 __PLUGIN = None;
             }
 
-            $crate::bindings::WEECHAT_RC_OK
+            weechat_sys::WEECHAT_RC_OK
         }
         $(
             weechat_plugin!(@attribute $name, $value, $length);

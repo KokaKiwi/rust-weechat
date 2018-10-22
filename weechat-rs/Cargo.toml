@@ -1,16 +1,13 @@
 [package]
-name = "weechat-rust-sample-plugin"
+name = "weechat"
 version = "0.1.0"
 authors = [
     "KokaKiwi <kokakiwi@kokakiwi.net>",
     "Damir Jelić <poljar@termina.org.uk>"
 ]
-
-[lib]
-name = "weechat_rust_sample_plugin"
-crate-type = ["dylib"]
+description = "Weechat API bindings for Rust"
+license = "MIT"
 
 [dependencies]
 libc = "*"
-weechat = { path = "../weechat-rs" }
 weechat-sys = { path = "../weechat-sys" }

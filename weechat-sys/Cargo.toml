@@ -1,11 +1,11 @@
 [package]
-name = "weechat"
+name = "weechat-sys"
 version = "0.1.0"
 authors = [
     "KokaKiwi <kokakiwi@kokakiwi.net>",
     "Damir Jelić <poljar@termina.org.uk>"
 ]
-description = "Weechat API bindings for Rust"
+description = "Rust low level API bindings for Weechat"
 license = "MIT"
 
 [build-dependencies]

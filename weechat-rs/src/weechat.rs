@@ -1,4 +1,4 @@
-use bindings::{
+use weechat_sys::{
     t_weechat_plugin,
     t_gui_buffer,
     t_gui_nick,
@@ -65,7 +65,7 @@ impl<'a> Default for Nick<'a> {
 }
 
 impl Buffer {
-    pub fn from_ptr(weechat_ptr: *mut t_weechat_plugin, buffer_ptr: *mut t_gui_buffer) -> Buffer {
+    fn from_ptr(weechat_ptr: *mut t_weechat_plugin, buffer_ptr: *mut t_gui_buffer) -> Buffer {
         Buffer {
             weechat: weechat_ptr,
             ptr: buffer_ptr
@@ -96,7 +96,15 @@ impl Buffer {
         let add_nick = weechat.get().nicklist_add_nick.unwrap();
 
         let nick_ptr = unsafe {
-            add_nick(self.ptr, ptr::null_mut(), c_nick.as_ptr(), color.as_ptr(), ptr::null_mut(), ptr::null_mut(), 1)
+            add_nick(
+                self.ptr,
+                ptr::null_mut(),
+                c_nick.as_ptr(),
+                color.as_ptr(),
+                ptr::null_mut(),
+                ptr::null_mut(),
+                1,
+            )
         };
 
         nick.ptr = Some(nick_ptr);
@@ -136,20 +144,22 @@ impl Weechat {
     pub fn buffer_new<A, B, C>(
         &self,
         name: &str,
-        input_cb: Option<fn (&Option<A>, &mut Option<B>, Buffer, &str)>,
+        input_cb: Option<fn(&Option<A>, &mut Option<B>, Buffer, &str)>,
         input_data_ref: &'static Option<A>,
         input_data: Option<B>,
-        close_cb: Option<fn (&Option<C>, Buffer)>,
-        close_cb_data: &'static Option<C>
+        close_cb: Option<fn(&Option<C>, Buffer)>,
+        close_cb_data: &'static Option<C>,
     ) -> Buffer {
-        unsafe extern "C" fn c_input_cb<A, B, C>(pointer: *const c_void,
-                               _data: *mut c_void,
-                               buffer: *mut t_gui_buffer,
-                               input_data: *const c_char)
-                               -> c_int {
+        unsafe extern "C" fn c_input_cb<A, B, C>(
+            pointer: *const c_void,
+            _data: *mut c_void,
+            buffer: *mut t_gui_buffer,
+            input_data: *const c_char,
+        ) -> c_int {
             let input_data = CStr::from_ptr(input_data).to_str();
 
-            let pointers: &mut BufferPointers<A, B, C> = { &mut *(pointer as *mut BufferPointers<A, B, C>) };
+            let pointers: &mut BufferPointers<A, B, C> =
+                { &mut *(pointer as *mut BufferPointers<A, B, C>) };
 
             let input_data = match input_data {
                 Ok(x) => x,
@@ -168,10 +178,11 @@ impl Weechat {
             WEECHAT_RC_OK
         }
 
-        unsafe extern "C" fn c_close_cb<A, B, C>(pointer: *const c_void,
-                               _data: *mut c_void,
-                               buffer: *mut t_gui_buffer)
-                               -> c_int {
+        unsafe extern "C" fn c_close_cb<A, B, C>(
+            pointer: *const c_void,
+            _data: *mut c_void,
+            buffer: *mut t_gui_buffer,
+        ) -> c_int {
             // We use from_raw() here so that the box get's freed at the end of this scope.
             let pointers = Box::from_raw(pointer as *mut BufferPointers<A, B, C>);
             let buffer = Buffer::from_ptr(pointers.weechat, buffer);

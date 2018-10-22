@@ -1,7 +1,7 @@
 extern crate libc;
+extern crate weechat_sys;
 
 pub mod plugin;
-pub mod bindings;
 pub mod weechat;
 
 pub use weechat::Weechat;
