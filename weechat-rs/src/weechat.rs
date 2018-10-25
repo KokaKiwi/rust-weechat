@@ -1,3 +1,7 @@
+#![warn(missing_docs)]
+
+//! Main weechat module
+
 use weechat_sys::{
     t_weechat_plugin,
     t_gui_buffer,
@@ -10,8 +14,10 @@ use std::os::raw::c_void;
 use std::ptr;
 use buffer::Buffer;
 
+/// Main Weechat struct that encapsulates common weechat API functions.
+/// It has a similar API as the weechat script API.
 pub struct Weechat {
-    inner: *mut t_weechat_plugin,
+    ptr: *mut t_weechat_plugin,
 }
 
 struct BufferPointers<'a, A: 'a, B, C: 'a> {
@@ -31,11 +37,13 @@ type WeechatInputCbT = unsafe extern "C" fn(
 ) -> c_int;
 
 impl Weechat {
-    pub fn from_ptr(inner: *mut t_weechat_plugin) -> Weechat {
-        assert!(!inner.is_null());
+    /// Create a Weechat object from a C t_weechat_plugin pointer.
+    /// * `ptr` - Pointer of the weechat plugin.
+    pub(crate) fn from_ptr(ptr: *mut t_weechat_plugin) -> Weechat {
+        assert!(!ptr.is_null());
 
         Weechat {
-            inner: inner,
+            ptr: ptr,
         }
     }
 }
@@ -44,10 +52,11 @@ impl Weechat {
     #[inline]
     pub(crate) fn get(&self) -> &t_weechat_plugin {
         unsafe {
-            &*self.inner
+            &*self.ptr
         }
     }
 
+    /// Write a message in WeeChat log file (weechat.log).
     pub fn log(&self, msg: &str) {
         let log_printf = self.get().log_printf.unwrap();
 
@@ -59,6 +68,16 @@ impl Weechat {
         }
     }
 
+    /// Create a new Weechat buffer
+    /// * `name` - Name of the new buffer
+    /// * `input_cb` - Callback that will be called when something is entered into the input bar of
+    /// the buffer
+    /// * `input_data_ref` - Reference to some arbitrary data that will be passed to the input
+    /// callback
+    /// * `input_data` - Data that will be taken over by weechat and passed to the input callback,
+    /// this data will be freed when the buffer closes
+    /// * `close_cb` - Callback that will be called when the buffer is closed.
+    /// * `close_cb_data` - Reference to some data that will be passed to the close callback.
     pub fn buffer_new<A, B, C>(
         &self,
         name: &str,
@@ -118,7 +137,7 @@ impl Weechat {
         // we are giving weechat ownership over the data and will free it in the buffer close
         // callback.
         let buffer_pointers = Box::new(BufferPointers::<A, B, C> {
-            weechat: self.inner,
+            weechat: self.ptr,
             input_cb: input_cb,
             input_data: input_data,
             input_data_ref: input_data_ref,
@@ -137,7 +156,7 @@ impl Weechat {
 
         let buf_ptr = unsafe {
             buf_new(
-                self.inner,
+                self.ptr,
                 c_name.as_ptr(),
                 c_input_cb,
                 buffer_pointers_ref as *const _ as *const c_void,
@@ -157,11 +176,12 @@ impl Weechat {
         };
 
         Buffer {
-            weechat: self.inner,
+            weechat: self.ptr,
             ptr: buf_ptr
         }
     }
 
+    /// Display a message on the core weechat buffer.
     pub fn print(&self, msg: &str) {
         let printf_date_tags = self.get().printf_date_tags.unwrap();
 
