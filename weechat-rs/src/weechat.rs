@@ -39,7 +39,7 @@ type WeechatInputCbT = unsafe extern "C" fn(
 impl Weechat {
     /// Create a Weechat object from a C t_weechat_plugin pointer.
     /// * `ptr` - Pointer of the weechat plugin.
-    pub(crate) fn from_ptr(ptr: *mut t_weechat_plugin) -> Weechat {
+    pub fn from_ptr(ptr: *mut t_weechat_plugin) -> Weechat {
         assert!(!ptr.is_null());
 
         Weechat {

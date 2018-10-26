@@ -9,7 +9,7 @@ use weechat::{
     WeechatPluginArgs,
     WeechatResult,
     Buffer,
-    Nick
+    NickArgs
 };
 use std::time::Instant;
 
@@ -54,11 +54,11 @@ impl WeechatPlugin for SamplePlugin {
         let now = Instant::now();
 
         for nick_number in 0..n {
-            let mut nick = Nick {
+            let nick = NickArgs {
                 name: &format!("nick_{}", &nick_number.to_string()),
                 ..Default::default()
             };
-            buffer.add_nick(&mut nick);
+            let _ = buffer.add_nick(nick);
         }
 
         buffer.print(&format!(

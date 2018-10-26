@@ -18,26 +18,35 @@ pub struct Buffer {
 }
 
 /// Nick creation arguments
-pub struct Nick<'a> {
-    pub ptr: Option<*mut t_gui_nick>,
-    pub buf_ptr: Option<*mut t_gui_buffer>,
+pub struct NickArgs<'a> {
+    /// Name of the new nick.
     pub name: &'a str,
+    /// Color for the nick.
     pub color: &'a str,
+    /// Prefix that will be shown before the name.
     pub prefix: &'a str,
+    /// Color of the prefix.
     pub prefix_color: &'a str,
+    /// Should the nick be visible in the nicklist.
     pub visible: bool,
 }
 
-impl<'a> Nick<'a> {
-    fn from_ptr(ptr: *mut t_gui_nick, buf_ptr: *mut t_gui_nick) {
+/// Weechat Nick type
+pub struct Nick {
+    ptr: *mut t_gui_nick,
+    buf_ptr: *mut t_gui_buffer,
+}
+
+impl Nick {
+    /// Create a high level Nick object from C nick and buffer pointers.
+    pub(crate) fn from_ptr(ptr: *mut t_gui_nick, buf_ptr: *mut t_gui_buffer) -> Nick {
+        Nick { ptr, buf_ptr }
     }
 }
 
-impl<'a> Default for Nick<'a> {
-    fn default() -> Nick<'a> {
-        Nick {
-            ptr: None,
-            buf_ptr: None,
+impl<'a> Default for NickArgs<'a> {
+    fn default() -> NickArgs<'a> {
+        NickArgs {
             name: "",
             color: "",
             prefix: "",
@@ -75,11 +84,14 @@ impl Buffer {
     }
 
     /// Create and add a new nick to the buffer nicklist. Returns the newly created nick.
-    pub fn add_nick(&self, nick: &mut Nick) {
+    /// The nick won't be removed from the nicklist if the returned nick is dropped.
+    pub fn add_nick(&self, nick: NickArgs) -> Nick {
         let weechat = Weechat::from_ptr(self.weechat);
 
         let c_nick = CString::new(nick.name).unwrap();
-        let color = CString::new("green").unwrap();
+        let color = CString::new(nick.color).unwrap();
+        let prefix = CString::new(nick.color).unwrap();
+        let prefix_color = CString::new(nick.color).unwrap();
         let add_nick = weechat.get().nicklist_add_nick.unwrap();
 
         let nick_ptr = unsafe {
@@ -88,13 +100,12 @@ impl Buffer {
                 ptr::null_mut(),
                 c_nick.as_ptr(),
                 color.as_ptr(),
-                ptr::null_mut(),
-                ptr::null_mut(),
-                1,
+                prefix.as_ptr(),
+                prefix_color.as_ptr(),
+                nick.visible as i32,
             )
         };
 
-        nick.ptr = Some(nick_ptr);
-        nick.buf_ptr = Some(self.ptr);
+        Nick::from_ptr(nick_ptr, self.ptr)
     }
 }
