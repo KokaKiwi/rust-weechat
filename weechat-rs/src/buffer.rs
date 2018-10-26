@@ -88,10 +88,11 @@ impl Buffer {
     pub fn add_nick(&self, nick: NickArgs) -> Nick {
         let weechat = Weechat::from_ptr(self.weechat);
 
+        // TODO this conversions can fail if any of those strings contain a null byte.
         let c_nick = CString::new(nick.name).unwrap();
         let color = CString::new(nick.color).unwrap();
-        let prefix = CString::new(nick.color).unwrap();
-        let prefix_color = CString::new(nick.color).unwrap();
+        let prefix = CString::new(nick.prefix).unwrap();
+        let prefix_color = CString::new(nick.prefix_color).unwrap();
         let add_nick = weechat.get().nicklist_add_nick.unwrap();
 
         let nick_ptr = unsafe {
