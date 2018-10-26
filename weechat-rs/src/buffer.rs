@@ -1,3 +1,6 @@
+#![warn(missing_docs)]
+
+//! Weechat Buffer module containing Buffer and Nick types.
 use weechat_sys::{
     t_weechat_plugin,
     t_gui_buffer,
@@ -7,11 +10,14 @@ use std::ffi::{CString};
 use std::ptr;
 use weechat::Weechat;
 
+/// A high level Buffer type encapsulating weechats C buffer pointer.
+/// The buffer won't be closed if the object is destroyed.
 pub struct Buffer {
     pub(crate) weechat: *mut t_weechat_plugin,
     pub(crate) ptr: *mut t_gui_buffer
 }
 
+/// Nick creation arguments
 pub struct Nick<'a> {
     pub ptr: Option<*mut t_gui_nick>,
     pub buf_ptr: Option<*mut t_gui_buffer>,
@@ -42,6 +48,7 @@ impl<'a> Default for Nick<'a> {
 }
 
 impl Buffer {
+    /// Create a high level Buffer object from a C plugin pointer and the buffer pointer.
     pub(crate) fn from_ptr(weechat_ptr: *mut t_weechat_plugin, buffer_ptr: *mut t_gui_buffer) -> Buffer {
         Buffer {
             weechat: weechat_ptr,
@@ -49,10 +56,12 @@ impl Buffer {
         }
     }
 
+    /// Get the Weechat plugin object from a Buffer object.
     pub fn get_weechat(self) -> Weechat {
         Weechat::from_ptr(self.weechat)
     }
 
+    /// Display a message on the buffer.
     pub fn print(&self, message: &str) {
         let weechat = Weechat::from_ptr(self.weechat);
         let printf_date_tags = weechat.get().printf_date_tags.unwrap();
@@ -65,6 +74,7 @@ impl Buffer {
 
     }
 
+    /// Create and add a new nick to the buffer nicklist. Returns the newly created nick.
     pub fn add_nick(&self, nick: &mut Nick) {
         let weechat = Weechat::from_ptr(self.weechat);
 
