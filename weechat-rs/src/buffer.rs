@@ -4,6 +4,7 @@
 use weechat_sys::{
     t_weechat_plugin,
     t_gui_buffer,
+    t_gui_nick_group,
     t_gui_nick,
 };
 use std::ffi::{CString};
@@ -42,6 +43,12 @@ impl Nick {
     pub(crate) fn from_ptr(ptr: *mut t_gui_nick, buf_ptr: *mut t_gui_buffer) -> Nick {
         Nick { ptr, buf_ptr }
     }
+}
+
+/// Weechat nicklist Group type.
+pub struct NickGroup {
+    pub(crate) ptr: *mut t_gui_nick_group,
+    buf_ptr: *mut t_gui_buffer,
 }
 
 impl<'a> Default for NickArgs<'a> {
@@ -85,7 +92,10 @@ impl Buffer {
 
     /// Create and add a new nick to the buffer nicklist. Returns the newly created nick.
     /// The nick won't be removed from the nicklist if the returned nick is dropped.
-    pub fn add_nick(&self, nick: NickArgs) -> Nick {
+    /// * `nick` - Nick arguments struct for the nick that should be added.
+    /// * `group` - Nicklist group that the nick should be added to. If no group is provided the
+    /// nick is added to the root group.
+    pub fn add_nick(&self, nick: NickArgs, group: Option<&NickGroup>) -> Nick {
         let weechat = Weechat::from_ptr(self.weechat);
 
         // TODO this conversions can fail if any of those strings contain a null byte.
@@ -95,10 +105,15 @@ impl Buffer {
         let prefix_color = CString::new(nick.prefix_color).unwrap();
         let add_nick = weechat.get().nicklist_add_nick.unwrap();
 
+        let group_ptr = match group {
+            Some(g) => g.ptr,
+            None => ptr::null_mut()
+        };
+
         let nick_ptr = unsafe {
             add_nick(
                 self.ptr,
-                ptr::null_mut(),
+                group_ptr,
                 c_nick.as_ptr(),
                 color.as_ptr(),
                 prefix.as_ptr(),
@@ -108,5 +123,30 @@ impl Buffer {
         };
 
         Nick::from_ptr(nick_ptr, self.ptr)
+    }
+
+    /// Add a new nicklist group to the buffers nicklist.
+    /// * `name` - Name of the new group.
+    /// * `color` - Color of the new group.
+    /// * `visible` - Should the group be visible in the nicklist.
+    /// * `parent_group` - Parent group that the group should be added to. If no group is provided the
+    /// group is added to the root group.
+    pub fn add_group(&self, name: &str, color: &str, visible: bool, parent_group: Option<&NickGroup>) -> NickGroup {
+        let weechat = Weechat::from_ptr(self.weechat);
+        let add_group = weechat.get().nicklist_add_group.unwrap();
+
+        let c_name = CString::new(name).unwrap();
+        let c_color = CString::new(color).unwrap();
+
+        let group_ptr = match parent_group {
+            Some(g) => g.ptr,
+            None => ptr::null_mut()
+        };
+
+        let group_ptr = unsafe {
+            add_group(self.ptr, group_ptr, c_name.as_ptr(), c_color.as_ptr(), visible as i32)
+        };
+
+        NickGroup { ptr: group_ptr, buf_ptr: self.ptr }
     }
 }

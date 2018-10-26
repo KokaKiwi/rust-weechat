@@ -4,7 +4,7 @@ use std::env;
 use std::path::PathBuf;
 
 fn main() {
-    const INCLUDED_TYPES: &[&str] = &["t_weechat_plugin", "t_gui_buffer", "t_gui_nick"];
+    const INCLUDED_TYPES: &[&str] = &["t_weechat_plugin", "t_gui_buffer", "t_gui_nick", "t_gui_nick_group"];
     const INCLUDED_VARS: &[&str] = &["WEECHAT_PLUGIN_API_VERSION"];
     let mut builder = bindgen::Builder::default().rustfmt_bindings(true);
 
