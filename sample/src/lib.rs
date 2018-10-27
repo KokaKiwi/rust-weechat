@@ -54,12 +54,14 @@ impl WeechatPlugin for SamplePlugin {
         let now = Instant::now();
 
         let op_group = buffer.add_group("operators", "blue", true, None);
-        let _ = buffer.add_nick(NickArgs{
+        let emma = buffer.add_nick(NickArgs{
             name: "Emma",
             color: "magenta",
             prefix: "&",
             ..Default::default()
         }, Some(&op_group));
+
+        weechat.print(&format!("Nick name getting test: {}", emma.get_name()));
 
         for nick_number in 0..n {
             let nick = NickArgs {
