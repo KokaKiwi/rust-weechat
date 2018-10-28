@@ -196,10 +196,10 @@ impl Weechat {
 
     /// Create a new weechat command. Returns the hook of the command. The command is unhooked if
     /// the hook is dropped.
-    pub fn hook_command<T>(
+    pub fn hook_command<T: Default>(
         &self,
         command_info: CommandInfo,
-        callback: fn(data: &Option<T>, buffer: Buffer),
+        callback: fn(data: &T, buffer: Buffer),
         callback_data: Option<T>
     ) -> Hook<T> {
 
@@ -231,7 +231,7 @@ impl Weechat {
         let data = Box::new(
             HookData {
                 callback: callback,
-                callback_data: callback_data,
+                callback_data: callback_data.unwrap_or_default(),
                 weechat_ptr: self.ptr
             }
         );

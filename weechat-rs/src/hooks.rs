@@ -24,8 +24,8 @@ impl<T> Drop for Hook<T> {
 }
 
 pub(crate) struct HookData <T> {
-    pub(crate) callback: fn(&Option<T>, Buffer),
-    pub(crate) callback_data: Option<T>,
+    pub(crate) callback: fn(&T, Buffer),
+    pub(crate) callback_data: T,
     pub(crate) weechat_ptr: *mut t_weechat_plugin
 }
 

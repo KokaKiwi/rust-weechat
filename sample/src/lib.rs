@@ -17,10 +17,10 @@ use std::time::Instant;
 
 struct SamplePlugin {
     weechat: Weechat,
-    rust_hook: Hook<String>,
+    _rust_hook: Hook<String>,
 }
 
-fn input_cb(data_ref: &Option<&str>, data: &mut Option<String>, buffer: Buffer, input: &str) {
+fn input_cb(_data_ref: &Option<&str>, data: &mut Option<String>, buffer: Buffer, input: &str) {
     match data {
         Some(x) => {
             buffer.print(x);
@@ -37,13 +37,8 @@ fn close_cb(_data: &Option<&str>, buffer: Buffer) {
     w.print("Closing buffer")
 }
 
-fn rust_command_cb(data: &Option<String>, buffer: Buffer) {
-    match data {
-        Some(d) => {
-            buffer.print(d);
-        },
-        None => (),
-    };
+fn rust_command_cb(data: &String, buffer: Buffer) {
+    buffer.print(data);
 }
 
 impl WeechatPlugin for SamplePlugin {
@@ -100,7 +95,7 @@ impl WeechatPlugin for SamplePlugin {
 
         Ok(SamplePlugin {
             weechat: weechat,
-            rust_hook: command
+            _rust_hook: command
         })
     }
 }
