@@ -20,16 +20,11 @@ struct SamplePlugin {
     _rust_hook: Hook<String>,
 }
 
-fn input_cb(_data_ref: &Option<&str>, data: &mut Option<String>, buffer: Buffer, input: &str) {
-    match data {
-        Some(x) => {
-            buffer.print(x);
-            if x == "Hello" {
-                x.push_str(" world.");
-            }
-        },
-        None => buffer.print(input),
-    };
+fn input_cb(_data_ref: &Option<&str>, data: &mut String, buffer: Buffer, input: &str) {
+    buffer.print(data);
+    if data == "Hello" {
+        data.push_str(" world.");
+    }
 }
 
 fn close_cb(_data: &Option<&str>, buffer: Buffer) {

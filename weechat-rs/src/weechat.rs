@@ -23,8 +23,8 @@ pub struct Weechat {
 
 struct BufferPointers<'a, A: 'a, B, C: 'a> {
     weechat: *mut t_weechat_plugin,
-    input_cb: Option<fn(&Option<A>, &mut Option<B>, Buffer, &str)>,
-    input_data: Option<B>,
+    input_cb: Option<fn(&Option<A>, &mut B, Buffer, &str)>,
+    input_data: B,
     input_data_ref: &'a Option<A>,
     close_cb: Option<fn(&Option<C>, Buffer)>,
     close_cb_data: &'a Option<C>,
@@ -79,10 +79,10 @@ impl Weechat {
     /// this data will be freed when the buffer closes
     /// * `close_cb` - Callback that will be called when the buffer is closed.
     /// * `close_cb_data` - Reference to some data that will be passed to the close callback.
-    pub fn buffer_new<A, B, C>(
+    pub fn buffer_new<A, B: Default, C>(
         &self,
         name: &str,
-        input_cb: Option<fn(&Option<A>, &mut Option<B>, Buffer, &str)>,
+        input_cb: Option<fn(&Option<A>, &mut B, Buffer, &str)>,
         input_data_ref: &'static Option<A>,
         input_data: Option<B>,
         close_cb: Option<fn(&Option<C>, Buffer)>,
@@ -140,7 +140,7 @@ impl Weechat {
         let buffer_pointers = Box::new(BufferPointers::<A, B, C> {
             weechat: self.ptr,
             input_cb: input_cb,
-            input_data: input_data,
+            input_data: input_data.unwrap_or_default(),
             input_data_ref: input_data_ref,
             close_cb: close_cb,
             close_cb_data: close_cb_data,
