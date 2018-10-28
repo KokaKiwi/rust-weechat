@@ -13,6 +13,7 @@ use libc::{c_char, c_int};
 use std::os::raw::c_void;
 use std::ptr;
 use buffer::Buffer;
+use hooks::{Hook, HookData, CommandInfo};
 
 /// Main Weechat struct that encapsulates common weechat API functions.
 /// It has a similar API as the weechat script API.
@@ -191,5 +192,68 @@ impl Weechat {
         unsafe {
             printf_date_tags(ptr::null_mut(), 0, ptr::null(), fmt.as_ptr(), msg.as_ptr());
         }
+    }
+
+    /// Create a new weechat command. Returns the hook of the command. The command is unhooked if
+    /// the hook is dropped.
+    pub fn hook_command<T>(
+        &self,
+        command_info: CommandInfo,
+        callback: fn(data: &Option<T>, buffer: Buffer),
+        callback_data: Option<T>
+    ) -> Hook<T> {
+
+        unsafe extern "C" fn c_hook_cb<T>(
+            pointer: *const c_void,
+            _data: *mut c_void,
+            buffer: *mut t_gui_buffer,
+            argc: i32,
+            argv: *mut *mut c_char,
+            _argv_eol: *mut *mut c_char,
+        ) -> c_int {
+            let hook_data: &mut HookData<T> =
+                { &mut *(pointer as *mut HookData<T>) };
+            let buffer = Buffer::from_ptr(hook_data.weechat_ptr, buffer);
+            let callback = hook_data.callback;
+            let callback_data = &hook_data.callback_data;
+
+            callback(callback_data, buffer);
+
+            WEECHAT_RC_OK
+        }
+
+        let name = CString::new(command_info.name).unwrap();
+        let description = CString::new(command_info.description).unwrap();
+        let args = CString::new(command_info.args).unwrap();
+        let args_description = CString::new(command_info.args_description).unwrap();
+        let completion = CString::new(command_info.completion).unwrap();
+
+        let data = Box::new(
+            HookData {
+                callback: callback,
+                callback_data: callback_data,
+                weechat_ptr: self.ptr
+            }
+        );
+
+        let data_ref = Box::leak(data);
+
+        let hook_command = self.get().hook_command.unwrap();
+        let hook_ptr = unsafe {
+            hook_command(
+                self.ptr,
+                name.as_ptr(),
+                description.as_ptr(),
+                args.as_ptr(),
+                args_description.as_ptr(),
+                completion.as_ptr(),
+                Some(c_hook_cb::<T>),
+                data_ref as *const _ as *const c_void,
+                ptr::null_mut(),
+            )
+        };
+        let hook_data = unsafe { Box::from_raw(data_ref) };
+
+        Hook::<T> { ptr: hook_ptr, weechat_ptr: self.ptr , _hook_data: hook_data}
     }
 }

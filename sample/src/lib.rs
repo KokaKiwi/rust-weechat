@@ -9,12 +9,15 @@ use weechat::{
     WeechatPluginArgs,
     WeechatResult,
     Buffer,
-    NickArgs
+    NickArgs,
+    Hook,
+    CommandInfo
 };
 use std::time::Instant;
 
 struct SamplePlugin {
-    weechat: Weechat
+    weechat: Weechat,
+    rust_hook: Hook<String>,
 }
 
 fn input_cb(data_ref: &Option<&str>, data: &mut Option<String>, buffer: Buffer, input: &str) {
@@ -32,6 +35,15 @@ fn input_cb(data_ref: &Option<&str>, data: &mut Option<String>, buffer: Buffer, 
 fn close_cb(_data: &Option<&str>, buffer: Buffer) {
     let w = buffer.get_weechat();
     w.print("Closing buffer")
+}
+
+fn rust_command_cb(data: &Option<String>, buffer: Buffer) {
+    match data {
+        Some(d) => {
+            buffer.print(d);
+        },
+        None => (),
+    };
 }
 
 impl WeechatPlugin for SamplePlugin {
@@ -58,6 +70,7 @@ impl WeechatPlugin for SamplePlugin {
             name: "Emma",
             color: "magenta",
             prefix: "&",
+            prefix_color: "green",
             ..Default::default()
         }, Some(&op_group));
 
@@ -78,8 +91,16 @@ impl WeechatPlugin for SamplePlugin {
             &now.elapsed().subsec_millis().to_string())
         );
 
+        let sample_command_info = CommandInfo {name: "rustcommand", ..Default::default()};
+        let command = weechat.hook_command(
+            sample_command_info,
+            rust_command_cb,
+            Some("Hello rust command".to_owned())
+        );
+
         Ok(SamplePlugin {
-            weechat: weechat
+            weechat: weechat,
+            rust_hook: command
         })
     }
 }
