@@ -155,7 +155,7 @@ impl Buffer {
         Nick::from_ptr(nick_ptr, self.ptr, self.weechat)
     }
 
-    /// Add a new nicklist group to the buffers nicklist.
+    /// Create and add a new nicklist group to the buffers nicklist.
     /// * `name` - Name of the new group.
     /// * `color` - Color of the new group.
     /// * `visible` - Should the group be visible in the nicklist.
