@@ -29,22 +29,11 @@ pub(crate) struct HookData <T> {
     pub(crate) weechat_ptr: *mut t_weechat_plugin
 }
 
+#[derive(Default)]
 pub struct CommandInfo<'a> {
     pub name: &'a str,
     pub description: &'a str,
     pub args: &'a str,
     pub args_description: &'a str,
     pub completion: &'a str,
-}
-
-impl<'a> Default for CommandInfo<'a> {
-    fn default() -> CommandInfo<'a> {
-        CommandInfo {
-            name: "",
-            description: "",
-            args: "",
-            args_description: "",
-            completion: ""
-        }
-    }
 }
