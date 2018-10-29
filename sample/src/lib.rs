@@ -20,20 +20,22 @@ struct SamplePlugin {
     _rust_hook: Hook<String>,
 }
 
-fn input_cb(_data_ref: &Option<&str>, data: &mut String, buffer: Buffer, input: &str) {
-    buffer.print(data);
-    if data == "Hello" {
-        data.push_str(" world.");
+impl SamplePlugin {
+    fn input_cb(_data_ref: &Option<&str>, data: &mut String, buffer: Buffer, input: &str) {
+        buffer.print(data);
+        if data == "Hello" {
+            data.push_str(" world.");
+        }
     }
-}
 
-fn close_cb(_data: &Option<&str>, buffer: Buffer) {
-    let w = buffer.get_weechat();
-    w.print("Closing buffer")
-}
+    fn close_cb(_data: &Option<&str>, buffer: Buffer) {
+        let w = buffer.get_weechat();
+        w.print("Closing buffer")
+    }
 
-fn rust_command_cb(data: &String, buffer: Buffer) {
-    buffer.print(data);
+    fn rust_command_cb(data: &String, buffer: Buffer) {
+        buffer.print(data);
+    }
 }
 
 impl WeechatPlugin for SamplePlugin {
@@ -43,10 +45,10 @@ impl WeechatPlugin for SamplePlugin {
         static INPUT: Option<&str> = Some("hello");
         let buffer = weechat.buffer_new(
             "Test buffer",
-            Some(input_cb),
+            Some(SamplePlugin::input_cb),
             &INPUT,
             Some("Hello".to_owned()),
-            Some(close_cb),
+            Some(SamplePlugin::close_cb),
             &None
         );
         buffer.print("Hello test buffer");
@@ -84,7 +86,7 @@ impl WeechatPlugin for SamplePlugin {
         let sample_command_info = CommandInfo {name: "rustcommand", ..Default::default()};
         let command = weechat.hook_command(
             sample_command_info,
-            rust_command_cb,
+            SamplePlugin::rust_command_cb,
             Some("Hello rust command".to_owned())
         );
 
