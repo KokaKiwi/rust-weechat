@@ -40,6 +40,23 @@ pub(crate) struct CommandHookData <T> {
     pub(crate) weechat_ptr: *mut t_weechat_plugin
 }
 
+impl FdHookMode {
+    pub(crate) fn as_tuple(&self) -> (i32, i32) {
+        let read = match self {
+            FdHookMode::Read => 1,
+            FdHookMode::ReadWrite => 1,
+            FdHookMode::Write => 0
+        };
+
+        let write = match self {
+            FdHookMode::Read => 0,
+            FdHookMode::ReadWrite => 1,
+            FdHookMode::Write => 1
+        };
+        (read, write)
+    }
+}
+
 impl Drop for Hook {
     fn drop(&mut self) {
         let weechat = Weechat::from_ptr(self.weechat_ptr);

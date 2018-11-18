@@ -251,12 +251,13 @@ impl Weechat {
     pub fn hook_fd<T, F>(
         &self,
         fd_object: F,
-        target: FdHookMode,
+        mode: FdHookMode,
         callback: fn(data: &T, fd_object: &F),
         callback_data: Option<T>
     ) -> FdHook<T, F> where
     T: Default,
     F: AsRawFd {
+
         unsafe extern "C" fn c_hook_cb<T, F>(
             pointer: *const c_void,
             _data: *mut c_void,
@@ -284,20 +285,8 @@ impl Weechat {
         );
 
         let data_ref = Box::leak(data);
-
         let hook_fd = self.get().hook_fd.unwrap();
-
-        let read = match target {
-            FdHookMode::Read => 1,
-            FdHookMode::ReadWrite => 1,
-            FdHookMode::Write => 0
-        };
-
-        let write = match target {
-            FdHookMode::Read => 0,
-            FdHookMode::ReadWrite => 1,
-            FdHookMode::Write => 1
-        };
+        let (read, write) = mode.as_tuple();
 
         let hook_ptr = unsafe {
             hook_fd(
