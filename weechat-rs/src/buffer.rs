@@ -10,6 +10,8 @@ use weechat_sys::{
 use std::ffi::{CString, CStr};
 use std::ptr;
 use weechat::Weechat;
+use libc::{c_char, c_int};
+use std::os::raw::c_void;
 
 /// A high level Buffer type encapsulating weechats C buffer pointer.
 /// The buffer won't be closed if the object is destroyed.
@@ -17,6 +19,23 @@ pub struct Buffer {
     pub(crate) weechat: *mut t_weechat_plugin,
     pub(crate) ptr: *mut t_gui_buffer
 }
+
+pub(crate) struct BufferPointers<'a, A: 'a, B, C: 'a> {
+    pub(crate) weechat: *mut t_weechat_plugin,
+    pub(crate) input_cb: Option<fn(&Option<A>, &mut B, Buffer, &str)>,
+    pub(crate) input_data: B,
+    pub(crate) input_data_ref: &'a Option<A>,
+    pub(crate) close_cb: Option<fn(&Option<C>, Buffer)>,
+    pub(crate) close_cb_data: &'a Option<C>,
+}
+
+pub(crate) type WeechatInputCbT = unsafe extern "C" fn(
+    pointer: *const c_void,
+    data: *mut c_void,
+    buffer: *mut t_gui_buffer,
+    input_data: *const c_char
+) -> c_int;
+
 
 /// Nick creation arguments
 pub struct NickArgs<'a> {

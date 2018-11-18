@@ -30,22 +30,6 @@ pub struct Weechat {
     ptr: *mut t_weechat_plugin,
 }
 
-struct BufferPointers<'a, A: 'a, B, C: 'a> {
-    weechat: *mut t_weechat_plugin,
-    input_cb: Option<fn(&Option<A>, &mut B, Buffer, &str)>,
-    input_data: B,
-    input_data_ref: &'a Option<A>,
-    close_cb: Option<fn(&Option<C>, Buffer)>,
-    close_cb_data: &'a Option<C>,
-}
-
-type WeechatInputCbT = unsafe extern "C" fn(
-    pointer: *const c_void,
-    data: *mut c_void,
-    buffer: *mut t_gui_buffer,
-    input_data: *const c_char
-) -> c_int;
-
 impl Weechat {
     /// Create a Weechat object from a C t_weechat_plugin pointer.
     /// * `ptr` - Pointer of the weechat plugin.
