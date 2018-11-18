@@ -7,13 +7,40 @@ use weechat::Weechat;
 use buffer::Buffer;
 
 /// Weechat Hook type. The hook is unhooked automatically when the object is dropped.
-pub struct Hook<T> {
+pub(crate) struct Hook {
     pub(crate) ptr: *mut t_hook,
     pub(crate) weechat_ptr: *mut t_weechat_plugin,
-    pub(crate) _hook_data: Box<HookData<T>>
 }
 
-impl<T> Drop for Hook<T> {
+pub struct CommandHook<T> {
+    pub(crate) _hook: Hook,
+    pub(crate) _hook_data: Box<CommandHookData<T>>
+}
+
+pub enum FdHookMode {
+    Read,
+    Write,
+    ReadWrite
+}
+
+pub struct FdHook<T, F> {
+    pub(crate) _hook: Hook,
+    pub(crate) _hook_data: Box<FdHookData<T, F>>
+}
+
+pub(crate) struct FdHookData <T, F> {
+    pub(crate) callback: fn(&T, fd_object: &F),
+    pub(crate) callback_data: T,
+    pub(crate) fd_object: F,
+}
+
+pub(crate) struct CommandHookData <T> {
+    pub(crate) callback: fn(&T, Buffer),
+    pub(crate) callback_data: T,
+    pub(crate) weechat_ptr: *mut t_weechat_plugin
+}
+
+impl Drop for Hook {
     fn drop(&mut self) {
         let weechat = Weechat::from_ptr(self.weechat_ptr);
         let unhook = weechat.get().unhook.unwrap();
@@ -21,12 +48,6 @@ impl<T> Drop for Hook<T> {
             unhook(self.ptr)
         };
     }
-}
-
-pub(crate) struct HookData <T> {
-    pub(crate) callback: fn(&T, Buffer),
-    pub(crate) callback_data: T,
-    pub(crate) weechat_ptr: *mut t_weechat_plugin
 }
 
 #[derive(Default)]

@@ -9,11 +9,20 @@ use weechat_sys::{
     WEECHAT_RC_ERROR
 };
 use std::ffi::{CStr, CString};
+use std::os::unix::io::AsRawFd;
 use libc::{c_char, c_int};
 use std::os::raw::c_void;
 use std::ptr;
-use buffer::Buffer;
-use hooks::{Hook, HookData, CommandInfo};
+use buffer::{Buffer, BufferPointers, WeechatInputCbT};
+use hooks::{
+    Hook,
+    CommandInfo,
+    CommandHook,
+    CommandHookData,
+    FdHook,
+    FdHookData,
+    FdHookMode
+};
 
 /// Main Weechat struct that encapsulates common weechat API functions.
 /// It has a similar API as the weechat script API.
@@ -196,12 +205,13 @@ impl Weechat {
 
     /// Create a new weechat command. Returns the hook of the command. The command is unhooked if
     /// the hook is dropped.
-    pub fn hook_command<T: Default>(
+    pub fn hook_command<T>(
         &self,
         command_info: CommandInfo,
         callback: fn(data: &T, buffer: Buffer),
         callback_data: Option<T>
-    ) -> Hook<T> {
+    ) -> CommandHook<T> where
+    T: Default {
 
         unsafe extern "C" fn c_hook_cb<T>(
             pointer: *const c_void,
@@ -211,8 +221,8 @@ impl Weechat {
             argv: *mut *mut c_char,
             _argv_eol: *mut *mut c_char,
         ) -> c_int {
-            let hook_data: &mut HookData<T> =
-                { &mut *(pointer as *mut HookData<T>) };
+            let hook_data: &mut CommandHookData<T> =
+                { &mut *(pointer as *mut CommandHookData<T>) };
             let buffer = Buffer::from_ptr(hook_data.weechat_ptr, buffer);
             let callback = hook_data.callback;
             let callback_data = &hook_data.callback_data;
@@ -229,7 +239,7 @@ impl Weechat {
         let completion = CString::new(command_info.completion).unwrap();
 
         let data = Box::new(
-            HookData {
+            CommandHookData {
                 callback: callback,
                 callback_data: callback_data.unwrap_or_default(),
                 weechat_ptr: self.ptr
@@ -253,7 +263,79 @@ impl Weechat {
             )
         };
         let hook_data = unsafe { Box::from_raw(data_ref) };
+        let hook = Hook { ptr: hook_ptr, weechat_ptr: self.ptr };
 
-        Hook::<T> { ptr: hook_ptr, weechat_ptr: self.ptr , _hook_data: hook_data}
+        CommandHook::<T> { _hook: hook, _hook_data: hook_data}
+    }
+
+    /// Hook an object that can be turned into a raw file descriptor.
+    /// Returns the hook. The hook is unhooked if the the object is dropped.
+    pub fn hook_fd<T, F>(
+        &self,
+        fd_object: F,
+        target: FdHookMode,
+        callback: fn(data: &T, fd_object: &F),
+        callback_data: Option<T>
+    ) -> FdHook<T, F> where
+    T: Default,
+    F: AsRawFd {
+        unsafe extern "C" fn c_hook_cb<T, F>(
+            pointer: *const c_void,
+            _data: *mut c_void,
+            _fd: i32,
+        ) -> c_int {
+            let hook_data: &mut FdHookData<T, F> =
+                { &mut *(pointer as *mut FdHookData<T, F>) };
+            let callback = hook_data.callback;
+            let callback_data = &hook_data.callback_data;
+            let fd_object = &hook_data.fd_object;
+
+            callback(callback_data, fd_object);
+
+            WEECHAT_RC_OK
+        }
+
+        let fd = fd_object.as_raw_fd();
+
+        let data = Box::new(
+            FdHookData {
+                callback: callback,
+                callback_data: callback_data.unwrap_or_default(),
+                fd_object
+            }
+        );
+
+        let data_ref = Box::leak(data);
+
+        let hook_fd = self.get().hook_fd.unwrap();
+
+        let read = match target {
+            FdHookMode::Read => 1,
+            FdHookMode::ReadWrite => 1,
+            FdHookMode::Write => 0
+        };
+
+        let write = match target {
+            FdHookMode::Read => 0,
+            FdHookMode::ReadWrite => 1,
+            FdHookMode::Write => 1
+        };
+
+        let hook_ptr = unsafe {
+            hook_fd(
+                self.ptr,
+                fd,
+                read,
+                write,
+                0,
+                Some(c_hook_cb::<T, F>),
+                data_ref as *const _ as *const c_void,
+                ptr::null_mut(),
+            )
+        };
+        let hook_data = unsafe { Box::from_raw(data_ref) };
+        let hook = Hook { ptr: hook_ptr, weechat_ptr: self.ptr };
+
+        FdHook::<T, F> { _hook: hook, _hook_data: hook_data}
     }
 }

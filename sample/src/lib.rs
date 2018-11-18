@@ -10,14 +10,14 @@ use weechat::{
     WeechatResult,
     Buffer,
     NickArgs,
-    Hook,
-    CommandInfo
+    CommandInfo,
+    CommandHook
 };
 use std::time::Instant;
 
 struct SamplePlugin {
     weechat: Weechat,
-    _rust_hook: Hook<String>,
+    _rust_hook: CommandHook<String>,
 }
 
 impl SamplePlugin {
