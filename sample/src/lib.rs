@@ -21,14 +21,14 @@ struct SamplePlugin {
 }
 
 impl SamplePlugin {
-    fn input_cb(_data_ref: &Option<&str>, data: &mut String, buffer: Buffer, input: &str) {
+    fn input_cb(data: &mut String, buffer: Buffer, input: &str) {
         buffer.print(data);
         if data == "Hello" {
             data.push_str(" world.");
         }
     }
 
-    fn close_cb(_data: &Option<&str>, buffer: Buffer) {
+    fn close_cb(_data: &(), buffer: Buffer) {
         let w = buffer.get_weechat();
         w.print("Closing buffer")
     }
@@ -42,14 +42,12 @@ impl WeechatPlugin for SamplePlugin {
     fn init(weechat: Weechat, _args: WeechatPluginArgs) -> WeechatResult<Self> {
         weechat.print("Hello Rust!");
 
-        static INPUT: Option<&str> = Some("hello");
         let buffer = weechat.buffer_new(
             "Test buffer",
             Some(SamplePlugin::input_cb),
-            &INPUT,
             Some("Hello".to_owned()),
             Some(SamplePlugin::close_cb),
-            &None
+            None
         );
         buffer.print("Hello test buffer");
 

@@ -20,13 +20,12 @@ pub struct Buffer {
     pub(crate) ptr: *mut t_gui_buffer
 }
 
-pub(crate) struct BufferPointers<'a, A: 'a, B, C: 'a> {
+pub(crate) struct BufferPointers<A, B> {
     pub(crate) weechat: *mut t_weechat_plugin,
-    pub(crate) input_cb: Option<fn(&Option<A>, &mut B, Buffer, &str)>,
-    pub(crate) input_data: B,
-    pub(crate) input_data_ref: &'a Option<A>,
-    pub(crate) close_cb: Option<fn(&Option<C>, Buffer)>,
-    pub(crate) close_cb_data: &'a Option<C>,
+    pub(crate) input_cb: Option<fn(&mut A, Buffer, &str)>,
+    pub(crate) input_data: A,
+    pub(crate) close_cb: Option<fn(&B, Buffer)>,
+    pub(crate) close_cb_data: B
 }
 
 pub(crate) type WeechatInputCbT = unsafe extern "C" fn(
