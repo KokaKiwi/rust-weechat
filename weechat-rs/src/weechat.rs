@@ -285,7 +285,14 @@ impl Weechat {
     }
 
     /// Hook an object that can be turned into a raw file descriptor.
-    /// Returns the hook. The hook is unhooked if the the object is dropped.
+    /// Returns the hook object.
+    /// * `fd_object` - An object for wich the file descriptor will be watched and the
+    ///     callback called when read or write operations can happen on it.
+    /// * `mode` - Configure the hook to watch for writes, reads or both on the file descriptor.
+    /// * `callback` - A function that will be called if a watched event on the file descriptor
+    ///     happends.
+    /// * `callback_data` - Data that will be passed to the callback every time the callback runs.
+    ///     This data will be freed when the hook is unhooked.
     pub fn hook_fd<T, F>(
         &self,
         fd_object: F,
