@@ -3,7 +3,7 @@ use weechat_sys::{
     t_hook,
 };
 
-use weechat::Weechat;
+use weechat::{Weechat, ArgsWeechat};
 use buffer::Buffer;
 
 /// Weechat Hook type. The hook is unhooked automatically when the object is dropped.
@@ -35,7 +35,7 @@ pub(crate) struct FdHookData <T, F> {
 }
 
 pub(crate) struct CommandHookData <T> {
-    pub(crate) callback: fn(&T, Buffer),
+    pub(crate) callback: fn(&T, Buffer, ArgsWeechat),
     pub(crate) callback_data: T,
     pub(crate) weechat_ptr: *mut t_weechat_plugin
 }

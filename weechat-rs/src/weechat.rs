@@ -12,7 +12,7 @@ use std::ffi::{CStr, CString};
 use std::os::unix::io::AsRawFd;
 use libc::{c_char, c_int};
 use std::os::raw::c_void;
-use std::ptr;
+use std::{ptr, vec};
 use buffer::{Buffer, BufferPointers, WeechatInputCbT};
 use hooks::{
     Hook,
@@ -23,6 +23,43 @@ use hooks::{
     FdHookData,
     FdHookMode
 };
+
+/// An iterator over the arguments of a command, yielding a String value for
+/// each argument.
+pub struct ArgsWeechat {
+    iter: vec::IntoIter<String>
+}
+
+impl ArgsWeechat {
+    /// Create an ArgsWeechat object from the underlying weechat C types.
+    /// Expects the strings in argv to be valid utf8, if not invalid UTF-8
+    /// sequences are replaced with the replacement character.
+    pub fn new(argc: c_int, argv: *mut *mut c_char) -> ArgsWeechat {
+        let argc = argc as isize;
+        let args: Vec<String> = (0..argc).map(|i| {
+            let cstr = unsafe {
+                CStr::from_ptr(*argv.offset(i) as *const libc::c_char)
+            };
+
+            String::from_utf8_lossy(&cstr.to_bytes().to_vec()).to_string()
+        }).collect();
+        ArgsWeechat { iter: args.clone().into_iter() }
+    }
+}
+
+impl Iterator for ArgsWeechat {
+    type Item = String;
+    fn next(&mut self) -> Option<String> { self.iter.next() }
+    fn size_hint(&self) -> (usize, Option<usize>) { self.iter.size_hint() }
+}
+
+impl ExactSizeIterator for ArgsWeechat {
+    fn len(&self) -> usize { self.iter.len() }
+}
+
+impl DoubleEndedIterator for ArgsWeechat {
+    fn next_back(&mut self) -> Option<String> { self.iter.next_back() }
+}
 
 /// Main Weechat struct that encapsulates common weechat API functions.
 /// It has a similar API as the weechat script API.
@@ -186,7 +223,7 @@ impl Weechat {
     pub fn hook_command<T>(
         &self,
         command_info: CommandInfo,
-        callback: fn(data: &T, buffer: Buffer),
+        callback: fn(data: &T, buffer: Buffer, args: ArgsWeechat),
         callback_data: Option<T>
     ) -> CommandHook<T> where
     T: Default {
@@ -204,8 +241,9 @@ impl Weechat {
             let buffer = Buffer::from_ptr(hook_data.weechat_ptr, buffer);
             let callback = hook_data.callback;
             let callback_data = &hook_data.callback_data;
+            let args = ArgsWeechat::new(argc, argv);
 
-            callback(callback_data, buffer);
+            callback(callback_data, buffer, args);
 
             WEECHAT_RC_OK
         }

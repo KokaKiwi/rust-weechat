@@ -6,7 +6,7 @@ extern crate libc;
 use weechat::{
     Weechat,
     WeechatPlugin,
-    WeechatPluginArgs,
+    ArgsWeechat,
     WeechatResult,
     Buffer,
     NickArgs,
@@ -33,13 +33,16 @@ impl SamplePlugin {
         w.print("Closing buffer")
     }
 
-    fn rust_command_cb(data: &String, buffer: Buffer) {
+    fn rust_command_cb(data: &String, buffer: Buffer, args: ArgsWeechat) {
         buffer.print(data);
+        for arg in args {
+            buffer.print(&arg)
+        }
     }
 }
 
 impl WeechatPlugin for SamplePlugin {
-    fn init(weechat: Weechat, _args: WeechatPluginArgs) -> WeechatResult<Self> {
+    fn init(weechat: Weechat, args: ArgsWeechat) -> WeechatResult<Self> {
         weechat.print("Hello Rust!");
 
         let buffer = weechat.buffer_new(

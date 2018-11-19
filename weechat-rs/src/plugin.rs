@@ -1,7 +1,5 @@
-use libc::{c_int, c_char};
-use weechat::Weechat;
-use std::ffi::CStr;
-use std::ops::Index;
+use libc::c_int;
+use weechat::{Weechat, ArgsWeechat};
 
 extern crate weechat_sys;
 
@@ -17,10 +15,7 @@ macro_rules! weechat_plugin(
         pub extern "C" fn weechat_plugin_init(plugin: *mut weechat_sys::t_weechat_plugin,
                                               argc: libc::c_int, argv: *mut *mut ::libc::c_char) -> libc::c_int {
             let plugin = Weechat::from_ptr(plugin);
-            let args = WeechatPluginArgs {
-                argc: argc as u32,
-                argv: argv,
-            };
+            let args = ArgsWeechat::new(argc, argv);
             match <$plugin as $crate::WeechatPlugin>::init(plugin, args) {
                 Ok(p) => {
                     unsafe {
@@ -54,35 +49,11 @@ macro_rules! weechat_plugin(
 );
 
 pub trait WeechatPlugin: Sized {
-    fn init(weechat: Weechat, args: WeechatPluginArgs) -> WeechatResult<Self>;
+    fn init(weechat: Weechat, args: ArgsWeechat) -> WeechatResult<Self>;
 }
 
 pub struct Error(c_int);
 pub type WeechatResult<T> = Result<T, Error>;
-
-pub struct WeechatPluginArgs {
-    pub argc: u32,
-    pub argv: *mut *mut c_char,
-}
-
-impl WeechatPluginArgs {
-    pub fn len(&self) -> usize {
-        self.argc as usize
-    }
-}
-
-impl Index<usize> for WeechatPluginArgs {
-    type Output = CStr;
-
-    fn index<'a>(&'a self, index: usize) -> &'a CStr {
-        assert!(index < self.len());
-
-        unsafe {
-            let ptr = self.argv.offset(index as isize);
-            CStr::from_ptr(ptr as *const c_char)
-        }
-    }
-}
 
 #[macro_export]
 macro_rules! weechat_plugin_name(
