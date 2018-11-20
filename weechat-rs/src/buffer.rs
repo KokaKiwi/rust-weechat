@@ -6,6 +6,8 @@ use weechat_sys::{
     t_gui_buffer,
     t_gui_nick_group,
     t_gui_nick,
+    WEECHAT_RC_ERROR,
+    WEECHAT_RC_OK
 };
 use std::ffi::{CString, CStr};
 use std::ptr;
@@ -26,6 +28,127 @@ pub(crate) struct BufferPointers<A, B> {
     pub(crate) input_data: A,
     pub(crate) close_cb: Option<fn(&B, Buffer)>,
     pub(crate) close_cb_data: B
+}
+
+/// Trait collecting buffer functions for Weechat
+pub trait Buffers {
+    /// Create a new Weechat buffer
+    /// * `name` - Name of the new buffer
+    /// * `input_cb` - Callback that will be called when something is entered into the input bar of
+    /// the buffer
+    /// * `input_data` - Data that will be taken over by weechat and passed to the input callback,
+    /// this data will be freed when the buffer closes
+    /// * `close_cb` - Callback that will be called when the buffer is closed.
+    /// * `close_cb_data` - Reference to some data that will be passed to the close callback.
+    fn buffer_new<A: Default, B: Default>(
+        &self,
+        name: &str,
+        input_cb: Option<fn(&mut A, Buffer, &str)>,
+        input_data: Option<A>,
+        close_cb: Option<fn(&B, Buffer)>,
+        close_cb_data: Option<B>,
+    ) -> Buffer;
+}
+
+impl Buffers for Weechat {
+    fn buffer_new<A: Default, B: Default>(
+        &self,
+        name: &str,
+        input_cb: Option<fn(&mut A, Buffer, &str)>,
+        input_data: Option<A>,
+        close_cb: Option<fn(&B, Buffer)>,
+        close_cb_data: Option<B>,
+    ) -> Buffer {
+        unsafe extern "C" fn c_input_cb<A, B>(
+            pointer: *const c_void,
+            _data: *mut c_void,
+            buffer: *mut t_gui_buffer,
+            input_data: *const c_char,
+        ) -> c_int {
+            let input_data = CStr::from_ptr(input_data).to_str();
+
+            let pointers: &mut BufferPointers<A, B> =
+                { &mut *(pointer as *mut BufferPointers<A, B>) };
+
+            let input_data = match input_data {
+                Ok(x) => x,
+                Err(_) => return WEECHAT_RC_ERROR,
+            };
+
+            let buffer = Buffer::from_ptr(pointers.weechat, buffer);
+            let data = &mut pointers.input_data;
+
+            match pointers.input_cb {
+                Some(callback) => callback(data, buffer, input_data),
+                None => {}
+            };
+
+            WEECHAT_RC_OK
+        }
+
+        unsafe extern "C" fn c_close_cb<A, B>(
+            pointer: *const c_void,
+            _data: *mut c_void,
+            buffer: *mut t_gui_buffer,
+        ) -> c_int {
+            // We use from_raw() here so that the box get's freed at the end of this scope.
+            let pointers = Box::from_raw(pointer as *mut BufferPointers<A, B>);
+            let buffer = Buffer::from_ptr(pointers.weechat, buffer);
+            let data = &pointers.close_cb_data;
+
+            match pointers.close_cb {
+                Some(callback) => callback(data, buffer),
+                None => {}
+            };
+            WEECHAT_RC_OK
+        }
+
+        // We create a box and use leak to stop rust from freeing our data,
+        // we are giving weechat ownership over the data and will free it in the buffer close
+        // callback.
+        let buffer_pointers = Box::new(BufferPointers::<A, B> {
+            weechat: self.ptr,
+            input_cb: input_cb,
+            input_data: input_data.unwrap_or_default(),
+            close_cb: close_cb,
+            close_cb_data: close_cb_data.unwrap_or_default(),
+        });
+        let buffer_pointers_ref: &BufferPointers<A, B> = Box::leak(buffer_pointers);
+
+        let buf_new = self.get().buffer_new.unwrap();
+        let c_name = CString::new(name).unwrap();
+
+        let c_input_cb: Option<WeechatInputCbT> = match input_cb {
+                Some(_) => Some(c_input_cb::<A, B>),
+                None => None
+            };
+
+        let buf_ptr = unsafe {
+            buf_new(
+                self.ptr,
+                c_name.as_ptr(),
+                c_input_cb,
+                buffer_pointers_ref as *const _ as *const c_void,
+                ptr::null_mut(),
+                Some(c_close_cb::<A, B>),
+                buffer_pointers_ref as *const _ as *const c_void,
+                ptr::null_mut()
+            )
+        };
+
+        let buffer_set = self.get().buffer_set.unwrap();
+        let option = CString::new("nicklist").unwrap();
+        let value = CString::new("1").unwrap();
+
+        unsafe {
+            buffer_set(buf_ptr, option.as_ptr(), value.as_ptr())
+        };
+
+        Buffer {
+            weechat: self.ptr,
+            ptr: buf_ptr
+        }
+    }
 }
 
 pub(crate) type WeechatInputCbT = unsafe extern "C" fn(
