@@ -302,6 +302,7 @@ impl Buffer {
     /// * `visible` - Should the group be visible in the nicklist.
     /// * `parent_group` - Parent group that the group should be added to. If no group is provided the
     /// group is added to the root group.
+    /// Returns the new nicklist group. The group is not removed if the object is dropped.
     pub fn add_group(&self, name: &str, color: &str, visible: bool, parent_group: Option<&NickGroup>) -> NickGroup {
         let weechat = Weechat::from_ptr(self.weechat);
         let add_group = weechat.get().nicklist_add_group.unwrap();
