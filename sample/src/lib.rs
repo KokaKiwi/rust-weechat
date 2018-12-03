@@ -5,7 +5,6 @@ extern crate libc;
 
 use weechat::{
     Weechat,
-    Buffers,
     WeechatPlugin,
     ArgsWeechat,
     WeechatResult,
@@ -46,7 +45,7 @@ impl WeechatPlugin for SamplePlugin {
     fn init(weechat: Weechat, _args: ArgsWeechat) -> WeechatResult<Self> {
         weechat.print("Hello Rust!");
 
-        let buffer = weechat.buffer_new(
+        let buffer: Buffer = weechat.buffer_new(
             "Test buffer",
             Some(SamplePlugin::input_cb),
             Some("Hello".to_owned()),

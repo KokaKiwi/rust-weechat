@@ -30,8 +30,7 @@ pub(crate) struct BufferPointers<A, B> {
     pub(crate) close_cb_data: B
 }
 
-/// Trait collecting buffer functions for Weechat
-pub trait Buffers {
+impl Weechat {
     /// Create a new Weechat buffer
     /// * `name` - Name of the new buffer
     /// * `input_cb` - Callback that will be called when something is entered into the input bar of
@@ -40,18 +39,7 @@ pub trait Buffers {
     /// this data will be freed when the buffer closes
     /// * `close_cb` - Callback that will be called when the buffer is closed.
     /// * `close_cb_data` - Reference to some data that will be passed to the close callback.
-    fn buffer_new<A: Default, B: Default>(
-        &self,
-        name: &str,
-        input_cb: Option<fn(&mut A, Buffer, &str)>,
-        input_data: Option<A>,
-        close_cb: Option<fn(&B, Buffer)>,
-        close_cb_data: Option<B>,
-    ) -> Buffer;
-}
-
-impl Buffers for Weechat {
-    fn buffer_new<A: Default, B: Default>(
+    pub fn buffer_new<A: Default, B: Default>(
         &self,
         name: &str,
         input_cb: Option<fn(&mut A, Buffer, &str)>,

@@ -76,9 +76,7 @@ impl Weechat {
             ptr: ptr,
         }
     }
-}
 
-impl Weechat {
     #[inline]
     pub(crate) fn get(&self) -> &t_weechat_plugin {
         unsafe {

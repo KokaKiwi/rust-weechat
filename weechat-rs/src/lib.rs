@@ -9,6 +9,6 @@ pub mod hooks;
 pub use weechat::Weechat;
 pub use weechat::ArgsWeechat;
 pub use hooks::{CommandInfo, CommandHook, FdHook};
-pub use buffer::{Buffer, Nick, NickArgs, Buffers};
+pub use buffer::{Buffer, Nick, NickArgs};
 pub use plugin::WeechatPlugin;
 pub use plugin::WeechatResult;
