@@ -10,13 +10,17 @@ use weechat::{
     Buffer,
     NickArgs,
     CommandInfo,
-    CommandHook
+    CommandHook,
+    Config,
+    ConfigSectionInfo,
+    OptionDescription
 };
 use std::time::Instant;
 
 struct SamplePlugin {
     weechat: Weechat,
     _rust_hook: CommandHook<String>,
+    _rust_config: Config
 }
 
 impl SamplePlugin {
@@ -83,17 +87,45 @@ impl WeechatPlugin for SamplePlugin {
             &now.elapsed().subsec_millis().to_string())
         );
 
-        let sample_command_info = CommandInfo {name: "rustcommand", ..Default::default()};
+        let sample_command_info = CommandInfo {
+            name: "rustcommand",
+            ..Default::default()
+        };
+
         let command = weechat.hook_command(
             sample_command_info,
             SamplePlugin::rust_command_cb,
             Some("Hello rust command".to_owned())
         );
 
-        Ok(SamplePlugin {
-            weechat: weechat,
-            _rust_hook: command
-        })
+        let mut config = weechat.config_new(
+            "rust_sample",
+            None,
+            None::<String>
+        );
+
+        let section_info: ConfigSectionInfo<String> = ConfigSectionInfo{
+            name: "sample_section",
+            ..Default::default()
+        };
+
+        let section = config.new_section(section_info);
+
+        let option_info = OptionDescription {
+            name: "test_option",
+            option_type: "string",
+            ..Default::default()
+        };
+
+        section.new_option(option_info);
+
+        Ok(
+            SamplePlugin {
+                weechat: weechat,
+                _rust_hook: command,
+                _rust_config: config
+            }
+        )
     }
 }
 

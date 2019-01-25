@@ -1,3 +1,5 @@
+#![warn(missing_docs)]
+
 use std::os::raw::c_void;
 use std::os::unix::io::AsRawFd;
 use libc::{c_char, c_int};
