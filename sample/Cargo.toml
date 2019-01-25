@@ -5,6 +5,7 @@ authors = [
     "KokaKiwi <kokakiwi@kokakiwi.net>",
     "Damir Jelić <poljar@termina.org.uk>"
 ]
+edition = "2018"
 
 [lib]
 name = "weechat_rust_sample_plugin"

@@ -1,6 +1,5 @@
 #[macro_use]
 extern crate weechat;
-extern crate weechat_sys;
 extern crate libc;
 
 use weechat::{
