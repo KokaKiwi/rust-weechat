@@ -76,8 +76,27 @@ impl Drop for Config {
     fn drop(&mut self) {
         let weechat = Weechat::from_ptr(self.weechat_ptr);
         let config_free = weechat.get().config_free.unwrap();
+
+        // Drop the sections first.
+        self.sections.clear();
+
         unsafe {
+            // Now drop the config.
             config_free(self.ptr)
+        };
+    }
+}
+
+impl Drop for ConfigSection {
+    fn drop(&mut self) {
+        let weechat = Weechat::from_ptr(self.weechat_ptr);
+
+        let options_free = weechat.get().config_section_free_options.unwrap();
+        let section_free = weechat.get().config_section_free.unwrap();
+
+        unsafe {
+            options_free(self.ptr);
+            section_free(self.ptr);
         };
     }
 }
