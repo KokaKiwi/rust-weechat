@@ -1,5 +1,5 @@
 use libc::c_int;
-use weechat::{Weechat, ArgsWeechat};
+use weechat::{ArgsWeechat, Weechat};
 
 extern crate weechat_sys;
 

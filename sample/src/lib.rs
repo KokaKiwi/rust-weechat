@@ -2,25 +2,16 @@
 extern crate weechat;
 extern crate libc;
 
-use weechat::{
-    Weechat,
-    WeechatPlugin,
-    ArgsWeechat,
-    WeechatResult,
-    Buffer,
-    NickArgs,
-    CommandInfo,
-    CommandHook,
-    Config,
-    ConfigSectionInfo,
-    OptionDescription
-};
 use std::time::Instant;
+use weechat::{
+    ArgsWeechat, Buffer, CommandHook, CommandInfo, Config, ConfigSectionInfo,
+    NickArgs, OptionDescription, Weechat, WeechatPlugin, WeechatResult,
+};
 
 struct SamplePlugin {
     weechat: Weechat,
     _rust_hook: CommandHook<String>,
-    _rust_config: Config
+    _rust_config: Config,
 }
 
 impl SamplePlugin {
@@ -53,7 +44,7 @@ impl WeechatPlugin for SamplePlugin {
             Some(SamplePlugin::input_cb),
             Some("Hello".to_owned()),
             Some(SamplePlugin::close_cb),
-            None
+            None,
         );
         buffer.print("Hello test buffer");
 
@@ -62,13 +53,16 @@ impl WeechatPlugin for SamplePlugin {
         let now = Instant::now();
 
         let op_group = buffer.add_group("operators", "blue", true, None);
-        let emma = buffer.add_nick(NickArgs{
-            name: "Emma",
-            color: "magenta",
-            prefix: "&",
-            prefix_color: "green",
-            ..Default::default()
-        }, Some(&op_group));
+        let emma = buffer.add_nick(
+            NickArgs {
+                name: "Emma",
+                color: "magenta",
+                prefix: "&",
+                prefix_color: "green",
+                ..Default::default()
+            },
+            Some(&op_group),
+        );
 
         weechat.print(&format!("Nick name getting test: {}", emma.get_name()));
 
@@ -84,8 +78,8 @@ impl WeechatPlugin for SamplePlugin {
             "Elapsed time for {} nick additions: {}.{}s.",
             &n.to_string(),
             &now.elapsed().as_secs().to_string(),
-            &now.elapsed().subsec_millis().to_string())
-        );
+            &now.elapsed().subsec_millis().to_string()
+        ));
 
         let sample_command_info = CommandInfo {
             name: "rustcommand",
@@ -95,16 +89,13 @@ impl WeechatPlugin for SamplePlugin {
         let command = weechat.hook_command(
             sample_command_info,
             SamplePlugin::rust_command_cb,
-            Some("Hello rust command".to_owned())
+            Some("Hello rust command".to_owned()),
         );
 
-        let mut config = weechat.config_new(
-            "rust_sample",
-            None,
-            None::<String>
-        );
+        let mut config =
+            weechat.config_new("rust_sample", None, None::<String>);
 
-        let section_info: ConfigSectionInfo<String> = ConfigSectionInfo{
+        let section_info: ConfigSectionInfo<String> = ConfigSectionInfo {
             name: "sample_section",
             ..Default::default()
         };
@@ -119,13 +110,11 @@ impl WeechatPlugin for SamplePlugin {
 
         section.new_option(option_info);
 
-        Ok(
-            SamplePlugin {
-                weechat: weechat,
-                _rust_hook: command,
-                _rust_config: config
-            }
-        )
+        Ok(SamplePlugin {
+            weechat: weechat,
+            _rust_hook: command,
+            _rust_config: config,
+        })
     }
 }
 

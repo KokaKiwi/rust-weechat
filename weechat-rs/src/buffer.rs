@@ -1,25 +1,21 @@
 #![warn(missing_docs)]
 
 //! Weechat Buffer module containing Buffer and Nick types.
-use weechat_sys::{
-    t_weechat_plugin,
-    t_gui_buffer,
-    t_gui_nick_group,
-    t_gui_nick,
-    WEECHAT_RC_ERROR,
-    WEECHAT_RC_OK
-};
-use std::ffi::{CString, CStr};
+use libc::{c_char, c_int};
+use std::ffi::{CStr, CString};
+use std::os::raw::c_void;
 use std::ptr;
 use weechat::Weechat;
-use libc::{c_char, c_int};
-use std::os::raw::c_void;
+use weechat_sys::{
+    t_gui_buffer, t_gui_nick, t_gui_nick_group, t_weechat_plugin,
+    WEECHAT_RC_ERROR, WEECHAT_RC_OK,
+};
 
 /// A high level Buffer type encapsulating weechats C buffer pointer.
 /// The buffer won't be closed if the object is destroyed.
 pub struct Buffer {
     pub(crate) weechat: *mut t_weechat_plugin,
-    pub(crate) ptr: *mut t_gui_buffer
+    pub(crate) ptr: *mut t_gui_buffer,
 }
 
 pub(crate) struct BufferPointers<A, B> {
@@ -27,7 +23,7 @@ pub(crate) struct BufferPointers<A, B> {
     pub(crate) input_cb: Option<fn(&mut A, Buffer, &str)>,
     pub(crate) input_data: A,
     pub(crate) close_cb: Option<fn(&B, Buffer)>,
-    pub(crate) close_cb_data: B
+    pub(crate) close_cb_data: B,
 }
 
 impl Weechat {
@@ -99,15 +95,16 @@ impl Weechat {
             close_cb,
             close_cb_data: close_cb_data.unwrap_or_default(),
         });
-        let buffer_pointers_ref: &BufferPointers<A, B> = Box::leak(buffer_pointers);
+        let buffer_pointers_ref: &BufferPointers<A, B> =
+            Box::leak(buffer_pointers);
 
         let buf_new = self.get().buffer_new.unwrap();
         let c_name = CString::new(name).unwrap();
 
         let c_input_cb: Option<WeechatInputCbT> = match input_cb {
-                Some(_) => Some(c_input_cb::<A, B>),
-                None => None
-            };
+            Some(_) => Some(c_input_cb::<A, B>),
+            None => None,
+        };
 
         let buf_ptr = unsafe {
             buf_new(
@@ -118,7 +115,7 @@ impl Weechat {
                 ptr::null_mut(),
                 Some(c_close_cb::<A, B>),
                 buffer_pointers_ref as *const _ as *const c_void,
-                ptr::null_mut()
+                ptr::null_mut(),
             )
         };
 
@@ -126,13 +123,11 @@ impl Weechat {
         let option = CString::new("nicklist").unwrap();
         let value = CString::new("1").unwrap();
 
-        unsafe {
-            buffer_set(buf_ptr, option.as_ptr(), value.as_ptr())
-        };
+        unsafe { buffer_set(buf_ptr, option.as_ptr(), value.as_ptr()) };
 
         Buffer {
             weechat: self.ptr,
-            ptr: buf_ptr
+            ptr: buf_ptr,
         }
     }
 }
@@ -141,9 +136,8 @@ pub(crate) type WeechatInputCbT = unsafe extern "C" fn(
     pointer: *const c_void,
     data: *mut c_void,
     buffer: *mut t_gui_buffer,
-    input_data: *const c_char
+    input_data: *const c_char,
 ) -> c_int;
-
 
 /// Nick creation arguments
 pub struct NickArgs<'a> {
@@ -173,7 +167,11 @@ impl Nick {
         buf_ptr: *mut t_gui_buffer,
         weechat_ptr: *mut t_weechat_plugin,
     ) -> Nick {
-        Nick { ptr, buf_ptr, weechat_ptr }
+        Nick {
+            ptr,
+            buf_ptr,
+            weechat_ptr,
+        }
     }
 
     /// Get a Weechat object out of the nick.
@@ -215,17 +213,20 @@ impl<'a> Default for NickArgs<'a> {
             color: "",
             prefix: "",
             prefix_color: "",
-            visible: true
+            visible: true,
         }
     }
 }
 
 impl Buffer {
     /// Create a high level Buffer object from a C plugin pointer and the buffer pointer.
-    pub(crate) fn from_ptr(weechat_ptr: *mut t_weechat_plugin, buffer_ptr: *mut t_gui_buffer) -> Buffer {
+    pub(crate) fn from_ptr(
+        weechat_ptr: *mut t_weechat_plugin,
+        buffer_ptr: *mut t_gui_buffer,
+    ) -> Buffer {
         Buffer {
             weechat: weechat_ptr,
-            ptr: buffer_ptr
+            ptr: buffer_ptr,
         }
     }
 
@@ -244,7 +245,6 @@ impl Buffer {
         unsafe {
             printf_date_tags(self.ptr, 0, ptr::null(), c_message.as_ptr())
         }
-
     }
 
     /// Create and add a new nick to the buffer nicklist. Returns the newly created nick.
@@ -264,7 +264,7 @@ impl Buffer {
 
         let group_ptr = match group {
             Some(g) => g.ptr,
-            None => ptr::null_mut()
+            None => ptr::null_mut(),
         };
 
         let nick_ptr = unsafe {
@@ -289,7 +289,13 @@ impl Buffer {
     /// * `parent_group` - Parent group that the group should be added to. If no group is provided the
     /// group is added to the root group.
     /// Returns the new nicklist group. The group is not removed if the object is dropped.
-    pub fn add_group(&self, name: &str, color: &str, visible: bool, parent_group: Option<&NickGroup>) -> NickGroup {
+    pub fn add_group(
+        &self,
+        name: &str,
+        color: &str,
+        visible: bool,
+        parent_group: Option<&NickGroup>,
+    ) -> NickGroup {
         let weechat = Weechat::from_ptr(self.weechat);
         let add_group = weechat.get().nicklist_add_group.unwrap();
 
@@ -298,13 +304,22 @@ impl Buffer {
 
         let group_ptr = match parent_group {
             Some(g) => g.ptr,
-            None => ptr::null_mut()
+            None => ptr::null_mut(),
         };
 
         let group_ptr = unsafe {
-            add_group(self.ptr, group_ptr, c_name.as_ptr(), c_color.as_ptr(), visible as i32)
+            add_group(
+                self.ptr,
+                group_ptr,
+                c_name.as_ptr(),
+                c_color.as_ptr(),
+                visible as i32,
+            )
         };
 
-        NickGroup { ptr: group_ptr, buf_ptr: self.ptr }
+        NickGroup {
+            ptr: group_ptr,
+            buf_ptr: self.ptr,
+        }
     }
 }

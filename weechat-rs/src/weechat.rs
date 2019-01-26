@@ -2,18 +2,16 @@
 
 //! Main weechat module
 
-use weechat_sys::{
-    t_weechat_plugin,
-};
+use weechat_sys::t_weechat_plugin;
 
-use std::ffi::{CStr, CString};
 use libc::{c_char, c_int};
+use std::ffi::{CStr, CString};
 use std::{ptr, vec};
 
 /// An iterator over the arguments of a command, yielding a String value for
 /// each argument.
 pub struct ArgsWeechat {
-    iter: vec::IntoIter<String>
+    iter: vec::IntoIter<String>,
 }
 
 impl ArgsWeechat {
@@ -22,29 +20,41 @@ impl ArgsWeechat {
     /// sequences are replaced with the replacement character.
     pub fn new(argc: c_int, argv: *mut *mut c_char) -> ArgsWeechat {
         let argc = argc as isize;
-        let args: Vec<String> = (0..argc).map(|i| {
-            let cstr = unsafe {
-                CStr::from_ptr(*argv.offset(i) as *const libc::c_char)
-            };
+        let args: Vec<String> = (0..argc)
+            .map(|i| {
+                let cstr = unsafe {
+                    CStr::from_ptr(*argv.offset(i) as *const libc::c_char)
+                };
 
-            String::from_utf8_lossy(&cstr.to_bytes().to_vec()).to_string()
-        }).collect();
-        ArgsWeechat { iter: args.clone().into_iter() }
+                String::from_utf8_lossy(&cstr.to_bytes().to_vec()).to_string()
+            })
+            .collect();
+        ArgsWeechat {
+            iter: args.clone().into_iter(),
+        }
     }
 }
 
 impl Iterator for ArgsWeechat {
     type Item = String;
-    fn next(&mut self) -> Option<String> { self.iter.next() }
-    fn size_hint(&self) -> (usize, Option<usize>) { self.iter.size_hint() }
+    fn next(&mut self) -> Option<String> {
+        self.iter.next()
+    }
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.iter.size_hint()
+    }
 }
 
 impl ExactSizeIterator for ArgsWeechat {
-    fn len(&self) -> usize { self.iter.len() }
+    fn len(&self) -> usize {
+        self.iter.len()
+    }
 }
 
 impl DoubleEndedIterator for ArgsWeechat {
-    fn next_back(&mut self) -> Option<String> { self.iter.next_back() }
+    fn next_back(&mut self) -> Option<String> {
+        self.iter.next_back()
+    }
 }
 
 /// Main Weechat struct that encapsulates common weechat API functions.
@@ -59,16 +69,12 @@ impl Weechat {
     pub fn from_ptr(ptr: *mut t_weechat_plugin) -> Weechat {
         assert!(!ptr.is_null());
 
-        Weechat {
-            ptr,
-        }
+        Weechat { ptr }
     }
 
     #[inline]
     pub(crate) fn get(&self) -> &t_weechat_plugin {
-        unsafe {
-            &*self.ptr
-        }
+        unsafe { &*self.ptr }
     }
 
     /// Write a message in WeeChat log file (weechat.log).
@@ -91,7 +97,13 @@ impl Weechat {
         let msg = CString::new(msg).unwrap();
 
         unsafe {
-            printf_date_tags(ptr::null_mut(), 0, ptr::null(), fmt.as_ptr(), msg.as_ptr());
+            printf_date_tags(
+                ptr::null_mut(),
+                0,
+                ptr::null(),
+                fmt.as_ptr(),
+                msg.as_ptr(),
+            );
         }
     }
 }

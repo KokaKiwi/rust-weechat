@@ -1,20 +1,15 @@
 #![warn(missing_docs)]
 
-use std::os::raw::c_void;
-use std::os::unix::io::AsRawFd;
 use libc::{c_char, c_int};
 use std::ffi::CString;
+use std::os::raw::c_void;
+use std::os::unix::io::AsRawFd;
 use std::ptr;
 
-use weechat_sys::{
-    t_weechat_plugin,
-    t_hook,
-    t_gui_buffer,
-    WEECHAT_RC_OK,
-};
+use weechat_sys::{t_gui_buffer, t_hook, t_weechat_plugin, WEECHAT_RC_OK};
 
-use weechat::{Weechat, ArgsWeechat};
 use buffer::Buffer;
+use weechat::{ArgsWeechat, Weechat};
 
 /// Weechat Hook type. The hook is unhooked automatically when the object is dropped.
 pub(crate) struct Hook {
@@ -24,30 +19,30 @@ pub(crate) struct Hook {
 
 pub struct CommandHook<T> {
     pub(crate) _hook: Hook,
-    pub(crate) _hook_data: Box<CommandHookData<T>>
+    pub(crate) _hook_data: Box<CommandHookData<T>>,
 }
 
 pub enum FdHookMode {
     Read,
     Write,
-    ReadWrite
+    ReadWrite,
 }
 
 pub struct FdHook<T, F> {
     pub(crate) _hook: Hook,
-    pub(crate) _hook_data: Box<FdHookData<T, F>>
+    pub(crate) _hook_data: Box<FdHookData<T, F>>,
 }
 
-pub(crate) struct FdHookData <T, F> {
+pub(crate) struct FdHookData<T, F> {
     pub(crate) callback: fn(&T, fd_object: &F),
     pub(crate) callback_data: T,
     pub(crate) fd_object: F,
 }
 
-pub(crate) struct CommandHookData <T> {
+pub(crate) struct CommandHookData<T> {
     pub(crate) callback: fn(&T, Buffer, ArgsWeechat),
     pub(crate) callback_data: T,
-    pub(crate) weechat_ptr: *mut t_weechat_plugin
+    pub(crate) weechat_ptr: *mut t_weechat_plugin,
 }
 
 impl FdHookMode {
@@ -55,13 +50,13 @@ impl FdHookMode {
         let read = match self {
             FdHookMode::Read => 1,
             FdHookMode::ReadWrite => 1,
-            FdHookMode::Write => 0
+            FdHookMode::Write => 0,
         };
 
         let write = match self {
             FdHookMode::Read => 0,
             FdHookMode::ReadWrite => 1,
-            FdHookMode::Write => 1
+            FdHookMode::Write => 1,
         };
         (read, write)
     }
@@ -71,9 +66,7 @@ impl Drop for Hook {
     fn drop(&mut self) {
         let weechat = Weechat::from_ptr(self.weechat_ptr);
         let unhook = weechat.get().unhook.unwrap();
-        unsafe {
-            unhook(self.ptr)
-        };
+        unsafe { unhook(self.ptr) };
     }
 }
 
@@ -93,10 +86,11 @@ impl Weechat {
         &self,
         command_info: CommandInfo,
         callback: fn(data: &T, buffer: Buffer, args: ArgsWeechat),
-        callback_data: Option<T>
-    ) -> CommandHook<T> where
-    T: Default {
-
+        callback_data: Option<T>,
+    ) -> CommandHook<T>
+    where
+        T: Default,
+    {
         unsafe extern "C" fn c_hook_cb<T>(
             pointer: *const c_void,
             _data: *mut c_void,
@@ -120,16 +114,15 @@ impl Weechat {
         let name = CString::new(command_info.name).unwrap();
         let description = CString::new(command_info.description).unwrap();
         let args = CString::new(command_info.args).unwrap();
-        let args_description = CString::new(command_info.args_description).unwrap();
+        let args_description =
+            CString::new(command_info.args_description).unwrap();
         let completion = CString::new(command_info.completion).unwrap();
 
-        let data = Box::new(
-            CommandHookData {
-                callback,
-                callback_data: callback_data.unwrap_or_default(),
-                weechat_ptr: self.ptr
-            }
-        );
+        let data = Box::new(CommandHookData {
+            callback,
+            callback_data: callback_data.unwrap_or_default(),
+            weechat_ptr: self.ptr,
+        });
 
         let data_ref = Box::leak(data);
 
@@ -148,9 +141,15 @@ impl Weechat {
             )
         };
         let hook_data = unsafe { Box::from_raw(data_ref) };
-        let hook = Hook { ptr: hook_ptr, weechat_ptr: self.ptr };
+        let hook = Hook {
+            ptr: hook_ptr,
+            weechat_ptr: self.ptr,
+        };
 
-        CommandHook::<T> { _hook: hook, _hook_data: hook_data}
+        CommandHook::<T> {
+            _hook: hook,
+            _hook_data: hook_data,
+        }
     }
 
     /// Hook an object that can be turned into a raw file descriptor.
@@ -167,11 +166,12 @@ impl Weechat {
         fd_object: F,
         mode: FdHookMode,
         callback: fn(data: &T, fd_object: &F),
-        callback_data: Option<T>
-    ) -> FdHook<T, F> where
-    T: Default,
-    F: AsRawFd {
-
+        callback_data: Option<T>,
+    ) -> FdHook<T, F>
+    where
+        T: Default,
+        F: AsRawFd,
+    {
         unsafe extern "C" fn c_hook_cb<T, F>(
             pointer: *const c_void,
             _data: *mut c_void,
@@ -190,13 +190,11 @@ impl Weechat {
 
         let fd = fd_object.as_raw_fd();
 
-        let data = Box::new(
-            FdHookData {
-                callback,
-                callback_data: callback_data.unwrap_or_default(),
-                fd_object
-            }
-        );
+        let data = Box::new(FdHookData {
+            callback,
+            callback_data: callback_data.unwrap_or_default(),
+            fd_object,
+        });
 
         let data_ref = Box::leak(data);
         let hook_fd = self.get().hook_fd.unwrap();
@@ -215,8 +213,14 @@ impl Weechat {
             )
         };
         let hook_data = unsafe { Box::from_raw(data_ref) };
-        let hook = Hook { ptr: hook_ptr, weechat_ptr: self.ptr };
+        let hook = Hook {
+            ptr: hook_ptr,
+            weechat_ptr: self.ptr,
+        };
 
-        FdHook::<T, F> { _hook: hook, _hook_data: hook_data}
+        FdHook::<T, F> {
+            _hook: hook,
+            _hook_data: hook_data,
+        }
     }
 }
