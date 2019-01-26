@@ -4,8 +4,9 @@ extern crate libc;
 
 use std::time::Instant;
 use weechat::{
-    ArgsWeechat, Buffer, CommandHook, CommandInfo, Config, ConfigSectionInfo,
-    NickArgs, OptionDescription, Weechat, WeechatPlugin, WeechatResult,
+    ArgsWeechat, Buffer, CommandHook, CommandDescription, Config,
+    ConfigSectionInfo, NickArgs, OptionDescription, Weechat, WeechatPlugin,
+    WeechatResult,
 };
 
 struct SamplePlugin {
@@ -81,13 +82,13 @@ impl WeechatPlugin for SamplePlugin {
             &now.elapsed().subsec_millis().to_string()
         ));
 
-        let sample_command_info = CommandInfo {
+        let sample_command = CommandDescription {
             name: "rustcommand",
             ..Default::default()
         };
 
         let command = weechat.hook_command(
-            sample_command_info,
+            sample_command,
             SamplePlugin::rust_command_cb,
             Some("Hello rust command".to_owned()),
         );

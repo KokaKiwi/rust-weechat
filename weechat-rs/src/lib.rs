@@ -9,7 +9,7 @@ pub mod weechat;
 
 pub use buffer::{Buffer, Nick, NickArgs};
 pub use config::{Config, ConfigSection, ConfigSectionInfo, OptionDescription};
-pub use hooks::{CommandHook, CommandInfo, FdHook};
+pub use hooks::{CommandHook, CommandDescription, FdHook};
 pub use plugin::WeechatPlugin;
 pub use plugin::WeechatResult;
 pub use weechat::ArgsWeechat;

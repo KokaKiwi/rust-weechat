@@ -1,5 +1,10 @@
 #![warn(missing_docs)]
 
+//! Weechat Hook module.
+//! Weechat hooks are used for many different things, to create commands, to
+//! listen to events on a file descriptor, add completions to weechat, etc.
+//! This module contains hook creation methods for the `Weechat` object.
+
 use libc::{c_char, c_int};
 use std::ffi::CString;
 use std::os::raw::c_void;
@@ -18,32 +23,39 @@ pub(crate) struct Hook {
     pub(crate) weechat_ptr: *mut t_weechat_plugin,
 }
 
+/// Hook for a weechat command, the command is removed when the object is
+/// dropped.
 pub struct CommandHook<T> {
-    pub(crate) _hook: Hook,
-    pub(crate) _hook_data: Box<CommandHookData<T>>,
+    _hook: Hook,
+    _hook_data: Box<CommandHookData<T>>,
 }
 
+/// Setting for the FdHook.
 pub enum FdHookMode {
+    /// Catch read events.
     Read,
+    /// Catch write events.
     Write,
+    /// Catch read and write events.
     ReadWrite,
 }
 
+/// Hook for a file descriptor, the hook is removed when the object is dropped.
 pub struct FdHook<T, F> {
-    pub(crate) _hook: Hook,
-    pub(crate) _hook_data: Box<FdHookData<T, F>>,
+    _hook: Hook,
+    _hook_data: Box<FdHookData<T, F>>,
 }
 
-pub(crate) struct FdHookData<T, F> {
-    pub(crate) callback: fn(&T, fd_object: &F),
-    pub(crate) callback_data: T,
-    pub(crate) fd_object: F,
+struct FdHookData<T, F> {
+    callback: fn(&T, fd_object: &F),
+    callback_data: T,
+    fd_object: F,
 }
 
-pub(crate) struct CommandHookData<T> {
-    pub(crate) callback: fn(&T, Buffer, ArgsWeechat),
-    pub(crate) callback_data: T,
-    pub(crate) weechat_ptr: *mut t_weechat_plugin,
+struct CommandHookData<T> {
+    callback: fn(&T, Buffer, ArgsWeechat),
+    callback_data: T,
+    weechat_ptr: *mut t_weechat_plugin,
 }
 
 impl FdHookMode {
@@ -72,11 +84,19 @@ impl Drop for Hook {
 }
 
 #[derive(Default)]
-pub struct CommandInfo<'a> {
+/// Description for a weechat command that should will be hooked.
+/// The fields of this struct accept the same string formats that are described
+/// in the weechat API documentation.
+pub struct CommandDescription<'a> {
+    /// Name of the command.
     pub name: &'a str,
+    /// Description for the command (displayed with `/help command`)
     pub description: &'a str,
+    /// Arguments for the command (displayed with `/help command`)
     pub args: &'a str,
+    /// Description for the command arguments (displayed with `/help command`)
     pub args_description: &'a str,
+    /// Completion template for the command.
     pub completion: &'a str,
 }
 
@@ -85,7 +105,7 @@ impl Weechat {
     /// command is unhooked if the hook is dropped.
     pub fn hook_command<T>(
         &self,
-        command_info: CommandInfo,
+        command_info: CommandDescription,
         callback: fn(data: &T, buffer: Buffer, args: ArgsWeechat),
         callback_data: Option<T>,
     ) -> CommandHook<T>
