@@ -11,7 +11,8 @@ use weechat_sys::{t_gui_buffer, t_hook, t_weechat_plugin, WEECHAT_RC_OK};
 use buffer::Buffer;
 use weechat::{ArgsWeechat, Weechat};
 
-/// Weechat Hook type. The hook is unhooked automatically when the object is dropped.
+/// Weechat Hook type. The hook is unhooked automatically when the object is
+/// dropped.
 pub(crate) struct Hook {
     pub(crate) ptr: *mut t_hook,
     pub(crate) weechat_ptr: *mut t_weechat_plugin,
@@ -80,8 +81,8 @@ pub struct CommandInfo<'a> {
 }
 
 impl Weechat {
-    /// Create a new weechat command. Returns the hook of the command. The command is unhooked if
-    /// the hook is dropped.
+    /// Create a new weechat command. Returns the hook of the command. The
+    /// command is unhooked if the hook is dropped.
     pub fn hook_command<T>(
         &self,
         command_info: CommandInfo,
@@ -154,13 +155,16 @@ impl Weechat {
 
     /// Hook an object that can be turned into a raw file descriptor.
     /// Returns the hook object.
-    /// * `fd_object` - An object for wich the file descriptor will be watched and the
-    ///     callback called when read or write operations can happen on it.
-    /// * `mode` - Configure the hook to watch for writes, reads or both on the file descriptor.
-    /// * `callback` - A function that will be called if a watched event on the file descriptor
-    ///     happends.
-    /// * `callback_data` - Data that will be passed to the callback every time the callback runs.
-    ///     This data will be freed when the hook is unhooked.
+    /// * `fd_object` - An object for wich the file descriptor will be watched
+    ///     and the callback called when read or write operations can happen
+    ///     on it.
+    /// * `mode` - Configure the hook to watch for writes, reads or both on the
+    ///     file descriptor.
+    /// * `callback` - A function that will be called if a watched event on the
+    ///     file descriptor happends.
+    /// * `callback_data` - Data that will be passed to the callback every time
+    ///     the callback runs. This data will be freed when the hook is
+    ///     unhooked.
     pub fn hook_fd<T, F>(
         &self,
         fd_object: F,

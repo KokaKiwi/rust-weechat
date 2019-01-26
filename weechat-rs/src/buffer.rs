@@ -29,12 +29,13 @@ pub(crate) struct BufferPointers<A, B> {
 impl Weechat {
     /// Create a new Weechat buffer
     /// * `name` - Name of the new buffer
-    /// * `input_cb` - Callback that will be called when something is entered into the input bar of
-    /// the buffer
-    /// * `input_data` - Data that will be taken over by weechat and passed to the input callback,
-    /// this data will be freed when the buffer closes
+    /// * `input_cb` - Callback that will be called when something is entered
+    ///     into the input bar of the buffer
+    /// * `input_data` - Data that will be taken over by weechat and passed to
+    ///     the input callback, this data will be freed when the buffer closes
     /// * `close_cb` - Callback that will be called when the buffer is closed.
-    /// * `close_cb_data` - Reference to some data that will be passed to the close callback.
+    /// * `close_cb_data` - Reference to some data that will be passed to the
+    ///     close callback.
     pub fn buffer_new<A: Default, B: Default>(
         &self,
         name: &str,
@@ -74,7 +75,8 @@ impl Weechat {
             _data: *mut c_void,
             buffer: *mut t_gui_buffer,
         ) -> c_int {
-            // We use from_raw() here so that the box get's freed at the end of this scope.
+            // We use from_raw() here so that the box get's freed at the end
+            // of this scope.
             let pointers = Box::from_raw(pointer as *mut BufferPointers<A, B>);
             let buffer = Buffer::from_ptr(pointers.weechat, buffer);
             let data = &pointers.close_cb_data;
@@ -86,8 +88,8 @@ impl Weechat {
         }
 
         // We create a box and use leak to stop rust from freeing our data,
-        // we are giving weechat ownership over the data and will free it in the buffer close
-        // callback.
+        // we are giving weechat ownership over the data and will free it in
+        // the buffer close callback.
         let buffer_pointers = Box::new(BufferPointers::<A, B> {
             weechat: self.ptr,
             input_cb,
@@ -180,9 +182,9 @@ impl Nick {
     }
 
     /// Get a string property of the nick.
-    /// * `property` - The name of the property to get the value for, this can be one of name,
-    /// color, prefix or prefix_color. If a unknown property is requested an empty string is
-    /// returned.
+    /// * `property` - The name of the property to get the value for, this can
+    ///     be one of name, color, prefix or prefix_color. If a unknown
+    ///     property is requested an empty string is returned.
     pub fn get_string(&self, property: &str) -> &str {
         let weechat = self.get_weechat();
         let get_string = weechat.get().nicklist_nick_get_string.unwrap();
@@ -219,7 +221,8 @@ impl<'a> Default for NickArgs<'a> {
 }
 
 impl Buffer {
-    /// Create a high level Buffer object from a C plugin pointer and the buffer pointer.
+    /// Create a high level Buffer object from a C plugin pointer and the
+    /// buffer pointer.
     pub(crate) fn from_ptr(
         weechat_ptr: *mut t_weechat_plugin,
         buffer_ptr: *mut t_gui_buffer,
@@ -247,15 +250,18 @@ impl Buffer {
         }
     }
 
-    /// Create and add a new nick to the buffer nicklist. Returns the newly created nick.
-    /// The nick won't be removed from the nicklist if the returned nick is dropped.
+    /// Create and add a new nick to the buffer nicklist. Returns the newly
+    /// created nick.
+    /// The nick won't be removed from the nicklist if the returned nick is
+    /// dropped.
     /// * `nick` - Nick arguments struct for the nick that should be added.
-    /// * `group` - Nicklist group that the nick should be added to. If no group is provided the
-    /// nick is added to the root group.
+    /// * `group` - Nicklist group that the nick should be added to. If no
+    ///     group is provided the nick is added to the root group.
     pub fn add_nick(&self, nick: NickArgs, group: Option<&NickGroup>) -> Nick {
         let weechat = Weechat::from_ptr(self.weechat);
 
-        // TODO this conversions can fail if any of those strings contain a null byte.
+        // TODO this conversions can fail if any of those strings contain a
+        // null byte.
         let c_nick = CString::new(nick.name).unwrap();
         let color = CString::new(nick.color).unwrap();
         let prefix = CString::new(nick.prefix).unwrap();
@@ -286,9 +292,10 @@ impl Buffer {
     /// * `name` - Name of the new group.
     /// * `color` - Color of the new group.
     /// * `visible` - Should the group be visible in the nicklist.
-    /// * `parent_group` - Parent group that the group should be added to. If no group is provided the
-    /// group is added to the root group.
-    /// Returns the new nicklist group. The group is not removed if the object is dropped.
+    /// * `parent_group` - Parent group that the group should be added to.
+    ///     If no group is provided the group is added to the root group.
+    /// Returns the new nicklist group. The group is not removed if the object
+    /// is dropped.
     pub fn add_group(
         &self,
         name: &str,
