@@ -60,7 +60,7 @@ impl Weechat {
         assert!(!ptr.is_null());
 
         Weechat {
-            ptr: ptr,
+            ptr,
         }
     }
 

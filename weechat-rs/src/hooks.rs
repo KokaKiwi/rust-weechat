@@ -125,7 +125,7 @@ impl Weechat {
 
         let data = Box::new(
             CommandHookData {
-                callback: callback,
+                callback,
                 callback_data: callback_data.unwrap_or_default(),
                 weechat_ptr: self.ptr
             }
@@ -192,7 +192,7 @@ impl Weechat {
 
         let data = Box::new(
             FdHookData {
-                callback: callback,
+                callback,
                 callback_data: callback_data.unwrap_or_default(),
                 fd_object
             }

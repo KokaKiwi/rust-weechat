@@ -66,10 +66,9 @@ impl Weechat {
             let buffer = Buffer::from_ptr(pointers.weechat, buffer);
             let data = &mut pointers.input_data;
 
-            match pointers.input_cb {
-                Some(callback) => callback(data, buffer, input_data),
-                None => {}
-            };
+            if let Some(callback) = pointers.input_cb {
+                callback(data, buffer, input_data)
+            }
 
             WEECHAT_RC_OK
         }
@@ -84,10 +83,9 @@ impl Weechat {
             let buffer = Buffer::from_ptr(pointers.weechat, buffer);
             let data = &pointers.close_cb_data;
 
-            match pointers.close_cb {
-                Some(callback) => callback(data, buffer),
-                None => {}
-            };
+            if let Some(callback) = pointers.close_cb {
+                callback(data, buffer)
+            }
             WEECHAT_RC_OK
         }
 
@@ -96,9 +94,9 @@ impl Weechat {
         // callback.
         let buffer_pointers = Box::new(BufferPointers::<A, B> {
             weechat: self.ptr,
-            input_cb: input_cb,
+            input_cb,
             input_data: input_data.unwrap_or_default(),
-            close_cb: close_cb,
+            close_cb,
             close_cb_data: close_cb_data.unwrap_or_default(),
         });
         let buffer_pointers_ref: &BufferPointers<A, B> = Box::leak(buffer_pointers);

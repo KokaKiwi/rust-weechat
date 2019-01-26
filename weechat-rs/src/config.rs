@@ -148,7 +148,7 @@ impl Config {
                 ptr::null_mut(),
             )
         };
-        let section = ConfigSection { ptr: ptr, config_ptr: self.ptr, weechat_ptr: weechat.ptr };
+        let section = ConfigSection { ptr, config_ptr: self.ptr, weechat_ptr: weechat.ptr };
         self.sections.insert(section_info.name.to_string(), section);
         &self.sections[section_info.name]
     }
@@ -169,7 +169,7 @@ impl ConfigSection {
         let value = CString::new(option_description.value).unwrap();
 
         let config_new_option = weechat.get().config_new_option.unwrap();
-        let option_ptr = unsafe {
+        unsafe {
             config_new_option(
                 self.config_ptr,
                 self.ptr,
