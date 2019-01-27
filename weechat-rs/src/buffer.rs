@@ -108,6 +108,7 @@ impl Weechat {
             None => None,
         };
 
+        // TODO this can fail, return a Option type
         let buf_ptr = unsafe {
             buf_new(
                 self.ptr,
@@ -121,11 +122,11 @@ impl Weechat {
             )
         };
 
-        let buffer_set = self.get().buffer_set.unwrap();
-        let option = CString::new("nicklist").unwrap();
-        let value = CString::new("1").unwrap();
+        // let buffer_set = self.get().buffer_set.unwrap();
+        // let option = CString::new("nicklist").unwrap();
+        // let value = CString::new("1").unwrap();
 
-        unsafe { buffer_set(buf_ptr, option.as_ptr(), value.as_ptr()) };
+        // unsafe { buffer_set(buf_ptr, option.as_ptr(), value.as_ptr()) };
 
         Buffer {
             weechat: self.ptr,

@@ -5,14 +5,14 @@ extern crate libc;
 use std::time::Instant;
 use weechat::{
     ArgsWeechat, Buffer, CommandHook, CommandDescription, Config,
-    ConfigSectionInfo, NickArgs, OptionDescription, Weechat, WeechatPlugin,
-    WeechatResult,
+    ConfigSectionInfo, NickArgs, Weechat, WeechatPlugin,
+    WeechatResult, StringOption, ConfigOption
 };
 
 struct SamplePlugin {
     weechat: Weechat,
     _rust_hook: CommandHook<String>,
-    _rust_config: Config,
+    _rust_config: Config<String>,
 }
 
 impl SamplePlugin {
@@ -34,6 +34,11 @@ impl SamplePlugin {
             buffer.print(&arg)
         }
     }
+
+    fn option_change_cb(data: &mut String, option: &StringOption) {
+        let weechat = option.get_weechat();
+        weechat.print("Changing rust option");
+    }
 }
 
 impl WeechatPlugin for SamplePlugin {
@@ -47,6 +52,7 @@ impl WeechatPlugin for SamplePlugin {
             Some(SamplePlugin::close_cb),
             None,
         );
+
         buffer.print("Hello test buffer");
 
         let n = 100;
@@ -103,13 +109,15 @@ impl WeechatPlugin for SamplePlugin {
 
         let section = config.new_section(section_info);
 
-        let option_info = OptionDescription {
-            name: "test_option",
-            option_type: "string",
-            ..Default::default()
-        };
-
-        section.new_option(option_info);
+        section.new_string_option(
+            "test_option",
+            "",
+            "",
+            "",
+            false,
+            Some(SamplePlugin::option_change_cb),
+            None::<String>
+        );
 
         Ok(SamplePlugin {
             weechat: weechat,
