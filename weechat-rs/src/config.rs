@@ -4,7 +4,7 @@
 
 use libc::{c_char, c_int};
 use std::collections::HashMap;
-use std::ffi::CString;
+use std::ffi::{CStr, CString};
 use std::os::raw::c_void;
 use std::ptr;
 
@@ -15,7 +15,7 @@ use config_options::{
 use weechat::Weechat;
 use weechat_sys::{
     t_config_file, t_config_option, t_config_section, t_weechat_plugin,
-    WEECHAT_RC_OK,
+    WEECHAT_RC_OK, WEECHAT_RC_ERROR
 };
 
 /// Weechat configuration file
@@ -153,6 +153,13 @@ type WeechatOptChangeCbT = unsafe extern "C" fn(
     option_pointer: *mut t_config_option,
 );
 
+type WeechatOptCheckCbT = unsafe extern "C" fn(
+    pointer: *const c_void,
+    _data: *mut c_void,
+    option_pointer: *mut t_config_option,
+    value: *const c_char,
+) -> c_int;
+
 impl ConfigSection {
     /// Create a new Weechat configuration option.
     /// * `name` - Name of the new option
@@ -179,8 +186,12 @@ impl ConfigSection {
                 null_allowed,
                 ..Default::default()
             },
+            None,
+            None::<String>,
             change_cb,
             change_cb_data,
+            None,
+            None::<String>
         );
         StringOption {
             ptr,
@@ -216,8 +227,12 @@ impl ConfigSection {
                 value,
                 null_allowed,
             },
+            None,
+            None::<String>,
             change_cb,
             change_cb_data,
+            None,
+            None::<String>
         );
         IntegerOption {
             ptr,
@@ -225,31 +240,84 @@ impl ConfigSection {
         }
     }
 
-    fn new_option<D, T>(
+    fn new_option<T, A, B, C>(
         &self,
         option_description: OptionDescription,
-        change_cb: Option<fn(&mut D, &T)>,
-        change_cb_data: Option<D>,
+        check_cb: Option<fn(&mut A, &T, &str)>,
+        check_cb_data: Option<A>,
+        change_cb: Option<fn(&mut B, &T)>,
+        change_cb_data: Option<B>,
+        delete_cb: Option<fn(&mut C, &T)>,
+        delete_cb_data: Option<C>,
     ) -> *mut t_config_option
     where
-        D: Default,
         T: ConfigOption,
+        A: Default,
+        B: Default,
+        C: Default,
     {
-        unsafe extern "C" fn c_change_cb<D, T>(
+        unsafe extern "C" fn c_check_cb<T, A, B, C>(
+            pointer: *const c_void,
+            _data: *mut c_void,
+            option_pointer: *mut t_config_option,
+            value: *const c_char,
+        ) -> c_int where
+            T: ConfigOption,
+        {
+            let value = CStr::from_ptr(value).to_str();
+            let pointers: &mut OptionPointers<T, A, B, C> =
+                { &mut *(pointer as *mut OptionPointers<T, A, B, C>) };
+
+            let option = T::from_ptrs(option_pointer, pointers.weechat_ptr);
+
+            let data = &mut pointers.check_cb_data;
+
+            let value = match value {
+                Ok(x) => x,
+                Err(_) => return WEECHAT_RC_ERROR,
+            };
+
+            if let Some(callback) = pointers.check_cb {
+                callback(data, &option, value)
+            };
+
+            WEECHAT_RC_OK
+        }
+
+        unsafe extern "C" fn c_change_cb<T, A, B, C>(
             pointer: *const c_void,
             _data: *mut c_void,
             option_pointer: *mut t_config_option,
         ) where
             T: ConfigOption,
         {
-            let pointers: &mut OptionPointers<D, T> =
-                { &mut *(pointer as *mut OptionPointers<D, T>) };
+            let pointers: &mut OptionPointers<T, A, B, C> =
+                { &mut *(pointer as *mut OptionPointers<T, A, B, C>) };
 
             let option = T::from_ptrs(option_pointer, pointers.weechat_ptr);
 
             let data = &mut pointers.change_cb_data;
 
             if let Some(callback) = pointers.change_cb {
+                callback(data, &option)
+            };
+        }
+
+        unsafe extern "C" fn c_delete_cb<T, A, B, C>(
+            pointer: *const c_void,
+            _data: *mut c_void,
+            option_pointer: *mut t_config_option,
+        ) where
+            T: ConfigOption,
+        {
+            let pointers: &mut OptionPointers<T, A, B, C> =
+                { &mut *(pointer as *mut OptionPointers<T, A, B, C>) };
+
+            let option = T::from_ptrs(option_pointer, pointers.weechat_ptr);
+
+            let data = &mut pointers.delete_cb_data;
+
+            if let Some(callback) = pointers.delete_cb {
                 callback(data, &option)
             };
         }
@@ -266,18 +334,32 @@ impl ConfigSection {
             CString::new(option_description.default_value).unwrap();
         let value = CString::new(option_description.value).unwrap();
 
-        let option_pointers = Box::new(OptionPointers::<D, T> {
+        let option_pointers = Box::new(OptionPointers::<T, A, B, C> {
             weechat_ptr: self.weechat_ptr,
+            check_cb: check_cb,
+            check_cb_data: check_cb_data.unwrap_or_default(),
             change_cb: change_cb,
             change_cb_data: change_cb_data.unwrap_or_default(),
+            delete_cb: delete_cb,
+            delete_cb_data: delete_cb_data.unwrap_or_default(),
         });
 
         // TODO this leaks curently.
-        let option_pointers_ref: &OptionPointers<D, T> =
+        let option_pointers_ref: &OptionPointers<T, A, B, C> =
             Box::leak(option_pointers);
 
+        let c_check_cb: Option<WeechatOptCheckCbT> = match check_cb {
+            Some(_) => Some(c_check_cb::<T, A, B, C>),
+            None => None,
+        };
+
         let c_change_cb: Option<WeechatOptChangeCbT> = match change_cb {
-            Some(_) => Some(c_change_cb::<D, T>),
+            Some(_) => Some(c_change_cb::<T, A, B, C>),
+            None => None,
+        };
+
+        let c_delete_cb: Option<WeechatOptChangeCbT> = match delete_cb {
+            Some(_) => Some(c_delete_cb::<T, A, B, C>),
             None => None,
         };
 
@@ -295,7 +377,7 @@ impl ConfigSection {
                 default_value.as_ptr(),
                 value.as_ptr(),
                 option_description.null_allowed as i32,
-                None,
+                c_check_cb,
                 option_pointers_ref as *const _ as *const c_void,
                 ptr::null_mut(),
                 c_change_cb,

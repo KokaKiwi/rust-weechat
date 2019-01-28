@@ -58,10 +58,14 @@ pub trait ConfigOption {
     }
 }
 
-pub(crate) struct OptionPointers<D, T> {
+pub(crate) struct OptionPointers<T, A, B, C> {
     pub(crate) weechat_ptr: *mut t_weechat_plugin,
-    pub(crate) change_cb: Option<fn(&mut D, &T)>,
-    pub(crate) change_cb_data: D,
+    pub(crate) check_cb: Option<fn(&mut A, &T, &str)>,
+    pub(crate) check_cb_data: A,
+    pub(crate) change_cb: Option<fn(&mut B, &T)>,
+    pub(crate) change_cb_data: B,
+    pub(crate) delete_cb: Option<fn(&mut C, &T)>,
+    pub(crate) delete_cb_data: C,
 }
 
 pub struct StringOption {
