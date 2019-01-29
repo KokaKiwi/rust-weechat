@@ -47,7 +47,7 @@ pub struct FdHook<T, F> {
 }
 
 struct FdHookData<T, F> {
-    callback: fn(&T, fd_object: &F),
+    callback: fn(&T, fd_object: &mut F),
     callback_data: T,
     fd_object: F,
 }
@@ -189,7 +189,7 @@ impl Weechat {
         &self,
         fd_object: F,
         mode: FdHookMode,
-        callback: fn(data: &T, fd_object: &F),
+        callback: fn(data: &T, fd_object: &mut F),
         callback_data: Option<T>,
     ) -> FdHook<T, F>
     where
@@ -205,7 +205,7 @@ impl Weechat {
                 { &mut *(pointer as *mut FdHookData<T, F>) };
             let callback = hook_data.callback;
             let callback_data = &hook_data.callback_data;
-            let fd_object = &hook_data.fd_object;
+            let fd_object = &mut hook_data.fd_object;
 
             callback(callback_data, fd_object);
 

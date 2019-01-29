@@ -18,4 +18,4 @@ pub use config_options::{
     BooleanOption, ColorOption, ConfigOption, IntegerOption, StringOption,
 };
 
-pub use hooks::{CommandDescription, CommandHook, FdHook};
+pub use hooks::{CommandDescription, CommandHook, FdHook, FdHookMode};
