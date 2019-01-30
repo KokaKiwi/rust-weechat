@@ -13,9 +13,16 @@ use weechat_sys::{
 
 /// A high level Buffer type encapsulating weechats C buffer pointer.
 /// The buffer won't be closed if the object is destroyed.
+#[derive(Eq)]
 pub struct Buffer {
     pub(crate) weechat: *mut t_weechat_plugin,
     pub(crate) ptr: *mut t_gui_buffer,
+}
+
+impl PartialEq for Buffer {
+    fn eq(&self, other: &Buffer) -> bool {
+        self.ptr == other.ptr
+    }
 }
 
 pub(crate) struct BufferPointers<A, B> {
