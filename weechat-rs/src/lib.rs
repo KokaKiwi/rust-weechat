@@ -7,6 +7,7 @@ pub mod config_options;
 pub mod hooks;
 pub mod plugin;
 pub mod weechat;
+pub mod infolist;
 
 pub use plugin::{WeechatPlugin, WeechatResult};
 pub use weechat::{ArgsWeechat, Weechat};
@@ -19,3 +20,5 @@ pub use config_options::{
 };
 
 pub use hooks::{CommandDescription, CommandHook, FdHook, FdHookMode};
+
+pub use infolist::{Infolist};
