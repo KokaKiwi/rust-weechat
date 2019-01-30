@@ -264,7 +264,7 @@ impl Buffer {
     }
 
     /// Get the Weechat plugin object from a Buffer object.
-    pub fn get_weechat(self) -> Weechat {
+    pub fn get_weechat(&self) -> Weechat {
         Weechat::from_ptr(self.weechat)
     }
 
