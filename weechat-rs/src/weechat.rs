@@ -106,4 +106,16 @@ impl Weechat {
             );
         }
     }
+
+    /// Return a string color code for display.
+    /// * `color_name` - name the color
+    pub fn color(&self, color_name: &str) -> &str {
+        let weechat_color = self.get().color.unwrap();
+
+        let color_name = CString::new(color_name).unwrap_or_default();
+        unsafe {
+            let color = weechat_color(color_name.as_ptr());
+            CStr::from_ptr(color).to_str().unwrap_or_default()
+        }
+    }
 }
