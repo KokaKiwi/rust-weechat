@@ -34,6 +34,34 @@ pub(crate) struct BufferPointers<A, B> {
 }
 
 impl Weechat {
+    /// Search a buffer by plugin and/or name.
+    /// * `plugin_name` - name of a plugin, the following special value is
+    ///     allowed: "==", the buffer name used is the buffers full name.
+    /// * `buffer_name` - name of a buffer, if this is an empty string,
+    ///     the current buffer is returned (buffer displayed by current
+    ///     window); if the name starts with (?i), the search is case
+    ///     insensitive.
+    /// Returns a Buffer if one is found, otherwise None.
+    pub fn buffer_search(
+        &self,
+        plugin_name: &str,
+        buffer_name: &str
+    ) -> Option<Buffer> {
+        let buffer_search = self.get().buffer_search.unwrap();
+
+        let plugin_name = CString::new(plugin_name).unwrap_or_default();
+        let buffer_name = CString::new(buffer_name).unwrap_or_default();
+
+        let buf_ptr = unsafe {
+            buffer_search(plugin_name.as_ptr(), buffer_name.as_ptr())
+        };
+        if buf_ptr.is_null() {
+            None
+        } else {
+            Some(Buffer::from_ptr(self.ptr, buf_ptr))
+        }
+    }
+
     /// Create a new Weechat buffer
     /// * `name` - Name of the new buffer
     /// * `input_cb` - Callback that will be called when something is entered
