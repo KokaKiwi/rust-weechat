@@ -129,12 +129,6 @@ impl Weechat {
             )
         };
 
-        // let buffer_set = self.get().buffer_set.unwrap();
-        // let option = CString::new("nicklist").unwrap();
-        // let value = CString::new("1").unwrap();
-
-        // unsafe { buffer_set(buf_ptr, option.as_ptr(), value.as_ptr()) };
-
         Buffer {
             weechat: self.ptr,
             ptr: buf_ptr,
@@ -336,5 +330,36 @@ impl Buffer {
             ptr: group_ptr,
             buf_ptr: self.ptr,
         }
+    }
+
+    fn set(&self, property: &str, value: &str) {
+        let weechat = Weechat::from_ptr(self.weechat);
+
+        let buffer_set = weechat.get().buffer_set.unwrap();
+        let option = CString::new(property).unwrap();
+        let value = CString::new(value).unwrap();
+
+        unsafe { buffer_set(self.ptr, option.as_ptr(), value.as_ptr()) };
+    }
+
+    /// Hide time for all lines in the buffer.
+    pub fn disable_time_for_each_line(&self) {
+        self.set("time_for_each_line", "0");
+    }
+
+    /// Disable the nicklist for this buffer.
+    pub fn disable_nicklist(&self) {
+        self.set("nicklist", "0")
+    }
+
+    /// Set the title of the buffer.
+    /// * `title` - The new title that will be set.
+    pub fn set_title(&self, title: &str) {
+        self.set("title", title);
+    }
+
+    /// Disable logging for this buffer.
+    pub fn disable_log(&self) {
+        self.set("localvar_set_no_log", "1");
     }
 }
