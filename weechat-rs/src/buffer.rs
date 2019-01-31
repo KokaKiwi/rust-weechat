@@ -370,6 +370,38 @@ impl Buffer {
         unsafe { buffer_set(self.ptr, option.as_ptr(), value.as_ptr()) };
     }
 
+    fn get_string(&self, property: &str) -> &str {
+        let weechat = Weechat::from_ptr(self.weechat);
+
+        let buffer_get = weechat.get().buffer_get_string.unwrap();
+        let property = CString::new(property).unwrap();
+
+        unsafe {
+            let value = buffer_get(self.ptr, property.as_ptr());
+            if value.is_null() {
+                ""
+            } else {
+                CStr::from_ptr(value).to_str().unwrap_or_default()
+            }
+
+        }
+    }
+
+    /// Get the full name of the buffer.
+    pub fn full_name(&self) -> &str {
+        self.get_string("full_name")
+    }
+
+    /// Get the name of the buffer.
+    pub fn name(&self) -> &str {
+        self.get_string("name")
+    }
+
+    /// Get the plugin name of the plugin that owns this buffer.
+    pub fn plugin_name(&self) -> &str {
+        self.get_string("plugin")
+    }
+
     /// Hide time for all lines in the buffer.
     pub fn disable_time_for_each_line(&self) {
         self.set("time_for_each_line", "0");
