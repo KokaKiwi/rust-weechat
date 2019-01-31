@@ -118,4 +118,27 @@ impl Weechat {
             CStr::from_ptr(color).to_str().unwrap_or_default()
         }
     }
+
+    /// Get some info from Weechat or a plugin.
+    /// * `info_name` - name the info
+    /// * `arguments` - arguments for the info
+    pub fn info_get(&self, info_name: &str, arguments: &str) -> &str {
+        let info_get = self.get().info_get.unwrap();
+
+        let info_name = CString::new(info_name).unwrap_or_default();
+        let arguments = CString::new(arguments).unwrap_or_default();
+
+        unsafe {
+            let info = info_get(
+                self.ptr,
+                info_name.as_ptr(),
+                arguments.as_ptr()
+            );
+            if info.is_null() {
+                ""
+            } else {
+                CStr::from_ptr(info).to_str().unwrap_or_default()
+            }
+        }
+    }
 }
