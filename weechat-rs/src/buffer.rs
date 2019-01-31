@@ -273,7 +273,7 @@ impl Buffer {
         let weechat = Weechat::from_ptr(self.weechat);
         let printf_date_tags = weechat.get().printf_date_tags.unwrap();
 
-        let c_message = CString::new(message).unwrap();
+        let c_message = CString::new(message).unwrap_or_default();
 
         unsafe {
             printf_date_tags(self.ptr, 0, ptr::null(), c_message.as_ptr())

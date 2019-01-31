@@ -82,7 +82,7 @@ impl Weechat {
         let log_printf = self.get().log_printf.unwrap();
 
         let fmt = CString::new("%s").unwrap();
-        let msg = CString::new(msg).unwrap();
+        let msg = CString::new(msg).unwrap_or_default();
 
         unsafe {
             log_printf(fmt.as_ptr(), msg.as_ptr());
