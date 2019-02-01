@@ -9,5 +9,5 @@ description = "Weechat API bindings for Rust"
 license = "MIT"
 
 [dependencies]
-libc = "*"
-weechat-sys = { path = "../weechat-sys" }
+libc = "0.2.48"
+weechat-sys = "0.1.0"
