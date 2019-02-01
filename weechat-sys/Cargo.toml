@@ -10,7 +10,7 @@ license = "MIT"
 edition = "2018"
 
 [build-dependencies]
-bindgen = "*"
+bindgen = "0.47.1"
 
 [dependencies]
-libc = "*"
+libc = "0.2.48"
