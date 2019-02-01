@@ -5,6 +5,9 @@ authors = [
     "KokaKiwi <kokakiwi@kokakiwi.net>",
     "Damir Jelić <poljar@termina.org.uk>"
 ]
+repository = "https://github.com/poljar/rust-weechat/"
+homepage = "https://github.com/poljar/rust-weechat/"
+
 description = "Weechat API bindings for Rust"
 license = "MIT"
 
