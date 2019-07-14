@@ -1,6 +1,7 @@
-#[macro_use]
 extern crate weechat;
 extern crate libc;
+
+use::weechat_macro::weechat_plugin;
 
 use std::time::Instant;
 use weechat::{
@@ -135,9 +136,9 @@ impl Drop for SamplePlugin {
 
 weechat_plugin!(
     SamplePlugin,
-    name: b"rust_sample\0"; 12,
-    author: b"poljar\0"; 7,
-    description: b"\0"; 1,
-    version: b"0.1.0\0"; 6,
-    license: b"MIT\0"; 4
+    name: "rust_sample",
+    author: "poljar",
+    description: "",
+    version: "0.1.0",
+    license: "MIT"
 );

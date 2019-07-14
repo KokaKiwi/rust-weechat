@@ -13,4 +13,5 @@ license = "MIT"
 
 [dependencies]
 libc = "0.2.48"
-weechat-sys = "0.1.0"
+weechat-macro = { path = "../weechat-macro" }
+weechat-sys = { path = "../weechat-sys" }

@@ -1,0 +1,14 @@
+[package]
+name = "weechat-macro"
+version = "0.1.0"
+authors = ["Damir Jelić <poljar@termina.org.uk>"]
+edition = "2018"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+libc = "*"
+syn = "*"
+proc-macro2 = "*"
+quote = "*"
