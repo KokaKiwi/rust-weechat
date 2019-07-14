@@ -76,7 +76,7 @@ impl WeechatPlugin for SamplePlugin {
 
         for nick_number in 0..n {
             let nick = NickArgs {
-                name: &format!("nick_{}", &nick_number.to_string()),
+                name: &format!("nick_{}", nick_number),
                 ..Default::default()
             };
             let _ = buffer.add_nick(nick, None);
