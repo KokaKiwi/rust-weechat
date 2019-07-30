@@ -84,9 +84,9 @@ impl WeechatPlugin for SamplePlugin {
 
         buffer.print(&format!(
             "Elapsed time for {} nick additions: {}.{}s.",
-            &n.to_string(),
-            &now.elapsed().as_secs().to_string(),
-            &now.elapsed().subsec_millis().to_string()
+            n,
+            now.elapsed().as_secs(),
+            now.elapsed().subsec_millis()
         ));
 
         let sample_command = CommandDescription {
@@ -121,7 +121,7 @@ impl WeechatPlugin for SamplePlugin {
         );
 
         Ok(SamplePlugin {
-            weechat: weechat,
+            weechat,
             _rust_hook: command,
             _rust_config: config,
         })
