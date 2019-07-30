@@ -215,20 +215,24 @@ impl Nick {
     /// * `property` - The name of the property to get the value for, this can
     ///     be one of name, color, prefix or prefix_color. If a unknown
     ///     property is requested an empty string is returned.
-    pub fn get_string(&self, property: &str) -> &str {
+    pub fn get_string(&self, property: &str) -> Option<&str> {
         let weechat = self.get_weechat();
         let get_string = weechat.get().nicklist_nick_get_string.unwrap();
         let c_property = CString::new(property).unwrap();
         let value = unsafe {
             let ret = get_string(self.buf_ptr, self.ptr, c_property.as_ptr());
-            CStr::from_ptr(ret)
+
+            if ret.is_null() {
+                None
+            } else {
+                CStr::from_ptr(ret).to_str().unwrap_or_default()
+            }
         };
-        value.to_str().unwrap_or_default()
     }
 
     /// Get the name property of the nick.
     pub fn get_name(&self) -> &str {
-        self.get_string("name")
+        self.get_string("name").unwrap()
     }
 }
 
@@ -370,7 +374,7 @@ impl Buffer {
         unsafe { buffer_set(self.ptr, option.as_ptr(), value.as_ptr()) };
     }
 
-    fn get_string(&self, property: &str) -> &str {
+    fn get_string(&self, property: &str) -> Option<&str> {
         let weechat = Weechat::from_ptr(self.weechat);
 
         let buffer_get = weechat.get().buffer_get_string.unwrap();
@@ -379,9 +383,9 @@ impl Buffer {
         unsafe {
             let value = buffer_get(self.ptr, property.as_ptr());
             if value.is_null() {
-                ""
+                None
             } else {
-                CStr::from_ptr(value).to_str().unwrap_or_default()
+                Some(CStr::from_ptr(value).to_str().unwrap_or_default())
             }
 
         }
@@ -389,17 +393,17 @@ impl Buffer {
 
     /// Get the full name of the buffer.
     pub fn full_name(&self) -> &str {
-        self.get_string("full_name")
+        self.get_string("full_name").unwrap()
     }
 
     /// Get the name of the buffer.
     pub fn name(&self) -> &str {
-        self.get_string("name")
+        self.get_string("name").unwrap()
     }
 
     /// Get the plugin name of the plugin that owns this buffer.
     pub fn plugin_name(&self) -> &str {
-        self.get_string("plugin")
+        self.get_string("plugin").unwrap()
     }
 
     /// Hide time for all lines in the buffer.

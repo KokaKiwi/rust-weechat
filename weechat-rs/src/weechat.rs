@@ -122,7 +122,7 @@ impl Weechat {
     /// Get some info from Weechat or a plugin.
     /// * `info_name` - name the info
     /// * `arguments` - arguments for the info
-    pub fn info_get(&self, info_name: &str, arguments: &str) -> &str {
+    pub fn info_get(&self, info_name: &str, arguments: &str) -> Option<&str> {
         let info_get = self.get().info_get.unwrap();
 
         let info_name = CString::new(info_name).unwrap_or_default();
@@ -135,9 +135,9 @@ impl Weechat {
                 arguments.as_ptr()
             );
             if info.is_null() {
-                ""
+                None
             } else {
-                CStr::from_ptr(info).to_str().unwrap_or_default()
+                Some(CStr::from_ptr(info).to_str().unwrap_or_default())
             }
         }
     }

@@ -77,15 +77,15 @@ impl Infolist {
     /// The types are: "i" (integer), "s" (string), "p" (pointer), "b" (buffer),
     /// "t" (time).
     /// Example: "i:my_integer,s:my_string"
-    pub fn fields(&self) -> &str {
+    pub fn fields(&self) -> Option<&str> {
         let weechat = Weechat::from_ptr(self.weechat_ptr);
         let infolist_fields = weechat.get().infolist_fields.unwrap();
         unsafe {
             let ret = infolist_fields(self.ptr);
             if ret.is_null() {
-                ""
+                None
             } else {
-                CStr::from_ptr(ret).to_str().unwrap_or_default()
+                Some(CStr::from_ptr(ret).to_str().unwrap_or_default())
             }
         }
     }
@@ -113,8 +113,7 @@ impl Infolist {
 
     /// Get the value of a string variable in the current infolist item.
     /// * `name` - The variable name of the infolist item.
-    /// If the variable isn't found an empty string is returned.
-    pub fn get_string(&self, name: &str) -> &str {
+    pub fn get_string(&self, name: &str) -> Option<&str> {
         let weechat = Weechat::from_ptr(self.weechat_ptr);
         let infolist_string = weechat.get().infolist_string.unwrap();
 
@@ -123,9 +122,9 @@ impl Infolist {
         unsafe {
             let ret = infolist_string(self.ptr, name.as_ptr());
             if ret.is_null() {
-                ""
+                None
             } else {
-                CStr::from_ptr(ret).to_str().unwrap_or_default()
+                Some(CStr::from_ptr(ret).to_str().unwrap_or_default())
             }
         }
     }
