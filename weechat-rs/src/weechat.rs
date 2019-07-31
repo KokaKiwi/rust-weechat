@@ -144,4 +144,28 @@ impl Weechat {
             }
         }
     }
+
+    /// Evaluate a weechat expression and return the result
+    //
+    // TODO: Add hashtable options
+    pub fn eval_string_expression(&self, expr: &str) -> Option<&str> {
+        let string_eval_expression = self.get().string_eval_expression.unwrap();
+
+        let expr = CString::new(expr).unwrap_or_default();
+
+        unsafe {
+            let result = string_eval_expression(
+                expr.as_ptr(),
+                ptr::null_mut(),
+                ptr::null_mut(),
+                ptr::null_mut(),
+            );
+
+            if result.is_null() {
+                None
+            } else {
+                Some(CStr::from_ptr(result).to_str().unwrap_or_default())
+            }
+        }
+    }
 }
