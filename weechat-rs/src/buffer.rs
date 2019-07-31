@@ -410,13 +410,33 @@ impl Buffer {
     }
 
     /// Get the full name of the buffer.
-    pub fn full_name(&self) -> Cow<str> {
+    pub fn get_full_name(&self) -> &str {
         self.get_string("full_name").unwrap()
     }
 
+    /// Set the full name of the buffer
+    pub fn set_full_name(&self, name: &str) {
+        self.set("full_name", name);
+    }
+
     /// Get the name of the buffer.
-    pub fn name(&self) -> Cow<str> {
+    pub fn get_name(&self) -> &str {
         self.get_string("name").unwrap()
+    }
+
+    /// Set the name of the buffer.
+    pub fn set_name(&self, name: &str) {
+        self.set("name", name);
+    }
+
+    /// Get the short_name of the buffer.
+    pub fn get_short_name(&self) -> &str {
+        self.get_string("short_name").unwrap()
+    }
+
+    /// Set the short_name of the buffer.
+    pub fn set_short_name(&self, name: &str) {
+        self.set("short_name", name);
     }
 
     /// Get the plugin name of the plugin that owns this buffer.
