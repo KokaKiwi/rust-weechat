@@ -11,3 +11,8 @@ pub const WEECHAT_PLUGIN_API_VERSION_LENGTH: usize = 12;
 /* return codes for plugin functions */
 pub const WEECHAT_RC_OK: c_int = 0;
 pub const WEECHAT_RC_ERROR: c_int = 0;
+
+pub const WEECHAT_CONFIG_OPTION_SET_OK_CHANGED: c_int = 2;
+pub const WEECHAT_CONFIG_OPTION_SET_OK_SAME_VALUE: c_int = 1;
+pub const WEECHAT_CONFIG_OPTION_SET_ERROR: c_int = 0;
+pub const WEECHAT_CONFIG_OPTION_SET_OPTION_NOT_FOUND: c_int = -1;

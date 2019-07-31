@@ -59,6 +59,27 @@ impl DoubleEndedIterator for ArgsWeechat {
     }
 }
 
+/// Status for updating options
+pub enum OptionChanged {
+    Changed = weechat_sys::WEECHAT_CONFIG_OPTION_SET_OK_CHANGED as isize,
+    Unchanged = weechat_sys::WEECHAT_CONFIG_OPTION_SET_OK_SAME_VALUE as isize,
+    NotFound = weechat_sys::WEECHAT_CONFIG_OPTION_SET_OPTION_NOT_FOUND as isize,
+    Error = weechat_sys::WEECHAT_CONFIG_OPTION_SET_ERROR as isize,
+}
+
+impl OptionChanged {
+    pub fn from_int(v: i32) -> OptionChanged {
+        use OptionChanged::*;
+        match v {
+            weechat_sys::WEECHAT_CONFIG_OPTION_SET_OK_CHANGED => Changed,
+            weechat_sys::WEECHAT_CONFIG_OPTION_SET_OK_SAME_VALUE => Unchanged,
+            weechat_sys::WEECHAT_CONFIG_OPTION_SET_OPTION_NOT_FOUND => NotFound,
+            weechat_sys::WEECHAT_CONFIG_OPTION_SET_ERROR => Error,
+            _ => unreachable!(),
+        }
+    }
+}
+
 /// Main Weechat struct that encapsulates common weechat API functions.
 /// It has a similar API as the weechat script API.
 pub struct Weechat {
@@ -142,6 +163,44 @@ impl Weechat {
             } else {
                 Some(CStr::from_ptr(info).to_string_lossy())
             }
+        }
+    }
+
+    /// Get value of a plugin option
+    pub fn get_plugin_option(&self, option: &str) -> Option<&str> {
+        let config_get_plugin = self.get().config_get_plugin.unwrap();
+
+        let option_name = CString::new(option).unwrap_or_default();
+
+        unsafe {
+            let option = config_get_plugin(self.ptr, option_name.as_ptr());
+            if option.is_null() {
+                None
+            } else {
+                Some(CStr::from_ptr(option).to_str().unwrap_or_default())
+            }
+        }
+    }
+
+    /// Set the value of a plugin option
+    pub fn set_plugin_option(
+        &self,
+        option: &str,
+        value: &str,
+    ) -> OptionChanged {
+        let config_set_plugin = self.get().config_set_plugin.unwrap();
+
+        let option_name = CString::new(option).unwrap_or_default();
+        let value = CString::new(value).unwrap_or_default();
+
+        unsafe {
+            let result = config_set_plugin(
+                self.ptr,
+                option_name.as_ptr(),
+                value.as_ptr(),
+            );
+
+            OptionChanged::from_int(result as i32)
         }
     }
 
