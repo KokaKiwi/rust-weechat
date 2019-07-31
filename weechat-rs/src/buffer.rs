@@ -243,6 +243,17 @@ impl Nick {
     pub fn get_name(&self) -> Cow<str> {
         self.get_string("name").unwrap()
     }
+
+    /// Removes the nick from it's nicklist
+    pub fn remove(&self) {
+        let weechat = self.get_weechat();
+
+        let nicklist_remove_nick = weechat.get().nicklist_remove_nick.unwrap();
+
+        unsafe {
+            nicklist_remove_nick(self.buf_ptr, self.ptr);
+        }
+    }
 }
 
 /// Weechat nicklist Group type.
@@ -340,6 +351,30 @@ impl Buffer {
                     ptr: group,
                     buf_ptr: self.ptr,
                 })
+            }
+        }
+    }
+
+    /// Search for a nick in a group
+    pub fn search_nick(
+        &self,
+        nick: &str,
+        group: Option<&NickGroup>,
+    ) -> Option<Nick> {
+        let weechat = Weechat::from_ptr(self.weechat);
+
+        let nicklist_search_nick = weechat.get().nicklist_search_nick.unwrap();
+
+        let nick = CString::new(nick).unwrap_or_default();
+        let group_ptr = group.map(|g| g.ptr).unwrap_or(ptr::null_mut());
+
+        unsafe {
+            let nick = nicklist_search_nick(self.ptr, group_ptr, nick.as_ptr());
+
+            if nick.is_null() {
+                None
+            } else {
+                Some(Nick::from_ptr(nick, self.ptr, self.weechat))
             }
         }
     }
