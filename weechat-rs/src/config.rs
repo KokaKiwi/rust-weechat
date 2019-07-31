@@ -13,6 +13,7 @@ use crate::config_options::{
     StringOption,
 };
 use crate::{LossyCString, Weechat};
+use std::borrow::Cow;
 use weechat_sys::{
     t_config_file, t_config_option, t_config_section, t_weechat_plugin,
     WEECHAT_RC_ERROR, WEECHAT_RC_OK,
@@ -243,7 +244,7 @@ impl ConfigSection {
     fn new_option<T, A, B, C>(
         &self,
         option_description: OptionDescription,
-        check_cb: Option<fn(&mut A, &T, &str)>,
+        check_cb: Option<fn(&mut A, &T, Cow<str>)>,
         check_cb_data: Option<A>,
         change_cb: Option<fn(&mut B, &T)>,
         change_cb_data: Option<B>,
@@ -265,18 +266,13 @@ impl ConfigSection {
         where
             T: ConfigOption,
         {
-            let value = CStr::from_ptr(value).to_str();
+            let value = CStr::from_ptr(value).to_string_lossy();
             let pointers: &mut OptionPointers<T, A, B, C> =
                 { &mut *(pointer as *mut OptionPointers<T, A, B, C>) };
 
             let option = T::from_ptrs(option_pointer, pointers.weechat_ptr);
 
             let data = &mut pointers.check_cb_data;
-
-            let value = match value {
-                Ok(x) => x,
-                Err(_) => return WEECHAT_RC_ERROR,
-            };
 
             if let Some(callback) = pointers.check_cb {
                 callback(data, &option, value)

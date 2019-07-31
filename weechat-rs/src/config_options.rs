@@ -1,6 +1,7 @@
 #![warn(missing_docs)]
 
 use crate::Weechat;
+use std::borrow::Cow;
 use weechat_sys::{t_config_option, t_weechat_plugin};
 
 #[derive(Default)]
@@ -60,7 +61,7 @@ pub trait ConfigOption {
 
 pub(crate) struct OptionPointers<T, A, B, C> {
     pub(crate) weechat_ptr: *mut t_weechat_plugin,
-    pub(crate) check_cb: Option<fn(&mut A, &T, &str)>,
+    pub(crate) check_cb: Option<fn(&mut A, &T, Cow<str>)>,
     pub(crate) check_cb_data: A,
     pub(crate) change_cb: Option<fn(&mut B, &T)>,
     pub(crate) change_cb_data: B,

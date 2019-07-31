@@ -3,6 +3,7 @@
 //! Weechat Buffer module containing Buffer and Nick types.
 use crate::{LossyCString, Weechat};
 use libc::{c_char, c_int};
+use std::borrow::Cow;
 use std::ffi::CStr;
 use std::os::raw::c_void;
 use std::ptr;
@@ -27,7 +28,7 @@ impl PartialEq for Buffer {
 
 pub(crate) struct BufferPointers<A, B> {
     pub(crate) weechat: *mut t_weechat_plugin,
-    pub(crate) input_cb: Option<fn(&mut A, Buffer, &str)>,
+    pub(crate) input_cb: Option<fn(&mut A, Buffer, Cow<str>)>,
     pub(crate) input_data: A,
     pub(crate) close_cb: Option<fn(&B, Buffer)>,
     pub(crate) close_cb_data: B,
@@ -74,7 +75,7 @@ impl Weechat {
     pub fn buffer_new<A: Default, B: Default>(
         &self,
         name: &str,
-        input_cb: Option<fn(&mut A, Buffer, &str)>,
+        input_cb: Option<fn(&mut A, Buffer, Cow<str>)>,
         input_data: Option<A>,
         close_cb: Option<fn(&B, Buffer)>,
         close_cb_data: Option<B>,
@@ -85,15 +86,10 @@ impl Weechat {
             buffer: *mut t_gui_buffer,
             input_data: *const c_char,
         ) -> c_int {
-            let input_data = CStr::from_ptr(input_data).to_str();
+            let input_data = CStr::from_ptr(input_data).to_string_lossy();
 
             let pointers: &mut BufferPointers<A, B> =
                 { &mut *(pointer as *mut BufferPointers<A, B>) };
-
-            let input_data = match input_data {
-                Ok(x) => x,
-                Err(_) => return WEECHAT_RC_ERROR,
-            };
 
             let buffer = Buffer::from_ptr(pointers.weechat, buffer);
             let data = &mut pointers.input_data;
@@ -215,7 +211,7 @@ impl Nick {
     /// * `property` - The name of the property to get the value for, this can
     ///     be one of name, color, prefix or prefix_color. If a unknown
     ///     property is requested an empty string is returned.
-    pub fn get_string(&self, property: &str) -> Option<&str> {
+    pub fn get_string(&self, property: &str) -> Option<Cow<str>> {
         let weechat = self.get_weechat();
         let get_string = weechat.get().nicklist_nick_get_string.unwrap();
         let c_property = LossyCString::new(property);
@@ -225,13 +221,13 @@ impl Nick {
             if ret.is_null() {
                 None
             } else {
-                Some(CStr::from_ptr(ret).to_str().unwrap_or_default())
+                Some(CStr::from_ptr(ret).to_string_lossy())
             }
         }
     }
 
     /// Get the name property of the nick.
-    pub fn get_name(&self) -> &str {
+    pub fn get_name(&self) -> Cow<str> {
         self.get_string("name").unwrap()
     }
 }
@@ -374,7 +370,7 @@ impl Buffer {
         unsafe { buffer_set(self.ptr, option.as_ptr(), value.as_ptr()) };
     }
 
-    fn get_string(&self, property: &str) -> Option<&str> {
+    fn get_string(&self, property: &str) -> Option<Cow<str>> {
         let weechat = Weechat::from_ptr(self.weechat);
 
         let buffer_get = weechat.get().buffer_get_string.unwrap();
@@ -385,23 +381,23 @@ impl Buffer {
             if value.is_null() {
                 None
             } else {
-                Some(CStr::from_ptr(value).to_str().unwrap_or_default())
+                Some(CStr::from_ptr(value).to_string_lossy())
             }
         }
     }
 
     /// Get the full name of the buffer.
-    pub fn full_name(&self) -> &str {
+    pub fn full_name(&self) -> Cow<str> {
         self.get_string("full_name").unwrap()
     }
 
     /// Get the name of the buffer.
-    pub fn name(&self) -> &str {
+    pub fn name(&self) -> Cow<str> {
         self.get_string("name").unwrap()
     }
 
     /// Get the plugin name of the plugin that owns this buffer.
-    pub fn plugin_name(&self) -> &str {
+    pub fn plugin_name(&self) -> Cow<str> {
         self.get_string("plugin").unwrap()
     }
 

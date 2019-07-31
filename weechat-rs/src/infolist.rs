@@ -9,6 +9,7 @@ use std::ptr;
 use weechat_sys::{t_gui_buffer, t_infolist, t_weechat_plugin};
 
 use crate::{Buffer, LossyCString, Weechat};
+use std::borrow::Cow;
 
 /// Weechat Infolist type.
 pub struct Infolist {
@@ -83,7 +84,7 @@ impl Infolist {
     /// The types are: "i" (integer), "s" (string), "p" (pointer), "b" (buffer),
     /// "t" (time).
     /// Example: "i:my_integer,s:my_string"
-    pub fn fields(&self) -> Option<&str> {
+    pub fn fields(&self) -> Option<Cow<str>> {
         let weechat = Weechat::from_ptr(self.weechat_ptr);
         let infolist_fields = weechat.get().infolist_fields.unwrap();
         unsafe {
@@ -91,7 +92,7 @@ impl Infolist {
             if ret.is_null() {
                 None
             } else {
-                Some(CStr::from_ptr(ret).to_str().unwrap_or_default())
+                Some(CStr::from_ptr(ret).to_string_lossy())
             }
         }
     }
@@ -119,7 +120,7 @@ impl Infolist {
 
     /// Get the value of a string variable in the current infolist item.
     /// * `name` - The variable name of the infolist item.
-    pub fn get_string(&self, name: &str) -> Option<&str> {
+    pub fn get_string(&self, name: &str) -> Option<Cow<str>> {
         let weechat = Weechat::from_ptr(self.weechat_ptr);
         let infolist_string = weechat.get().infolist_string.unwrap();
 
@@ -130,7 +131,7 @@ impl Infolist {
             if ret.is_null() {
                 None
             } else {
-                Some(CStr::from_ptr(ret).to_str().unwrap_or_default())
+                Some(CStr::from_ptr(ret).to_string_lossy())
             }
         }
     }

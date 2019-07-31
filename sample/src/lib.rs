@@ -1,4 +1,5 @@
 use std::time::Instant;
+use std::borrow::Cow;
 use weechat::{
     weechat_plugin, ArgsWeechat, Buffer, CommandDescription, CommandHook,
     Config, ConfigOption, ConfigSectionInfo, NickArgs, StringOption, Weechat,
@@ -12,7 +13,7 @@ struct SamplePlugin {
 }
 
 impl SamplePlugin {
-    fn input_cb(data: &mut String, buffer: Buffer, _input: &str) {
+    fn input_cb(data: &mut String, buffer: Buffer, _input: Cow<str>) {
         buffer.print(data);
         if data == "Hello" {
             data.push_str(" world.");

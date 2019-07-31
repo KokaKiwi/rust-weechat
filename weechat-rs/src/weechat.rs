@@ -6,6 +6,7 @@ use weechat_sys::t_weechat_plugin;
 
 use crate::LossyCString;
 use libc::{c_char, c_int};
+use std::borrow::Cow;
 use std::ffi::{CStr, CString};
 use std::{ptr, vec};
 
@@ -110,20 +111,24 @@ impl Weechat {
 
     /// Return a string color code for display.
     /// * `color_name` - name the color
-    pub fn color(&self, color_name: &str) -> &str {
+    pub fn color(&self, color_name: &str) -> Cow<str> {
         let weechat_color = self.get().color.unwrap();
 
         let color_name = LossyCString::new(color_name);
         unsafe {
             let color = weechat_color(color_name.as_ptr());
-            CStr::from_ptr(color).to_str().unwrap_or_default()
+            CStr::from_ptr(color).to_string_lossy()
         }
     }
 
     /// Get some info from Weechat or a plugin.
     /// * `info_name` - name the info
     /// * `arguments` - arguments for the info
-    pub fn info_get(&self, info_name: &str, arguments: &str) -> Option<&str> {
+    pub fn info_get(
+        &self,
+        info_name: &str,
+        arguments: &str,
+    ) -> Option<Cow<str>> {
         let info_get = self.get().info_get.unwrap();
 
         let info_name = LossyCString::new(info_name);
@@ -135,7 +140,7 @@ impl Weechat {
             if info.is_null() {
                 None
             } else {
-                Some(CStr::from_ptr(info).to_str().unwrap_or_default())
+                Some(CStr::from_ptr(info).to_string_lossy())
             }
         }
     }
