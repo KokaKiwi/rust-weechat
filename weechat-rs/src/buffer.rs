@@ -300,6 +300,26 @@ impl Buffer {
         }
     }
 
+    /// Display a message on the buffer with attached date and tags
+    pub fn print_tags_dated(&self, date: i64, tags: &str, message: &str) {
+        let weechat = Weechat::from_ptr(self.weechat);
+        let printf_date_tags = weechat.get().printf_date_tags.unwrap();
+
+        let fmt_str = CString::new("%s").unwrap();
+        let tags = CString::new(tags).unwrap_or_default();
+        let message = CString::new(message).unwrap_or_default();
+
+        unsafe {
+            printf_date_tags(
+                self.ptr,
+                date,
+                tags.as_ptr(),
+                fmt_str.as_ptr(),
+                message.as_ptr(),
+            )
+        }
+    }
+
     /// Create and add a new nick to the buffer nicklist. Returns the newly
     /// created nick.
     /// The nick won't be removed from the nicklist if the returned nick is
@@ -470,5 +490,13 @@ impl Buffer {
     /// Disable logging for this buffer.
     pub fn disable_log(&self) {
         self.set("localvar_set_no_log", "1");
+    }
+
+    /// Clear buffer contents
+    pub fn clear(&self) {
+        let weechat = Weechat::from_ptr(self.weechat);
+
+        let buffer_clear = weechat.get().buffer_clear.unwrap();
+        unsafe { buffer_clear(self.ptr) }
     }
 }
