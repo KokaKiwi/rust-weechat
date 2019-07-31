@@ -6,14 +6,13 @@
 //! This module contains hook creation methods for the `Weechat` object.
 
 use libc::{c_char, c_int};
-use std::ffi::CString;
 use std::os::raw::c_void;
 use std::os::unix::io::AsRawFd;
 use std::ptr;
 
 use weechat_sys::{t_gui_buffer, t_hook, t_weechat_plugin, WEECHAT_RC_OK};
 
-use crate::{ArgsWeechat, Buffer, Weechat};
+use crate::{ArgsWeechat, Buffer, LossyCString, Weechat};
 
 /// Weechat Hook type. The hook is unhooked automatically when the object is
 /// dropped.
@@ -131,12 +130,11 @@ impl Weechat {
             WEECHAT_RC_OK
         }
 
-        let name = CString::new(command_info.name).unwrap();
-        let description = CString::new(command_info.description).unwrap();
-        let args = CString::new(command_info.args).unwrap();
-        let args_description =
-            CString::new(command_info.args_description).unwrap();
-        let completion = CString::new(command_info.completion).unwrap();
+        let name = LossyCString::new(command_info.name);
+        let description = LossyCString::new(command_info.description);
+        let args = LossyCString::new(command_info.args);
+        let args_description = LossyCString::new(command_info.args_description);
+        let completion = LossyCString::new(command_info.completion);
 
         let data = Box::new(CommandHookData {
             callback,

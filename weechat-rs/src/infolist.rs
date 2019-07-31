@@ -2,13 +2,13 @@
 
 //! Weechat Infolist module.
 
-use std::ffi::{CStr, CString};
+use std::ffi::CStr;
 use std::os::raw::c_void;
 use std::ptr;
 
 use weechat_sys::{t_gui_buffer, t_infolist, t_weechat_plugin};
 
-use crate::{Buffer, Weechat};
+use crate::{Buffer, LossyCString, Weechat};
 
 /// Weechat Infolist type.
 pub struct Infolist {
@@ -36,8 +36,8 @@ impl Weechat {
         name: &str,
         arguments: &str,
     ) -> Option<Infolist> {
-        let name = CString::new(name).unwrap_or_default();
-        let arguments = CString::new(arguments).unwrap_or_default();
+        let name = LossyCString::new(name);
+        let arguments = LossyCString::new(arguments);
 
         let infolist_get = self.get().infolist_get.unwrap();
         let ptr = unsafe {
@@ -100,7 +100,7 @@ impl Infolist {
         let weechat = Weechat::from_ptr(self.weechat_ptr);
         let infolist_pointer = weechat.get().infolist_pointer.unwrap();
 
-        let name = CString::new(name).unwrap_or_default();
+        let name = LossyCString::new(name);
 
         unsafe { infolist_pointer(self.ptr, name.as_ptr()) }
     }
@@ -123,7 +123,7 @@ impl Infolist {
         let weechat = Weechat::from_ptr(self.weechat_ptr);
         let infolist_string = weechat.get().infolist_string.unwrap();
 
-        let name = CString::new(name).unwrap_or_default();
+        let name = LossyCString::new(name);
 
         unsafe {
             let ret = infolist_string(self.ptr, name.as_ptr());

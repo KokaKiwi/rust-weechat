@@ -4,6 +4,7 @@
 
 use weechat_sys::t_weechat_plugin;
 
+use crate::LossyCString;
 use libc::{c_char, c_int};
 use std::ffi::{CStr, CString};
 use std::{ptr, vec};
@@ -82,7 +83,7 @@ impl Weechat {
         let log_printf = self.get().log_printf.unwrap();
 
         let fmt = CString::new("%s").unwrap();
-        let msg = CString::new(msg).unwrap_or_default();
+        let msg = LossyCString::new(msg);
 
         unsafe {
             log_printf(fmt.as_ptr(), msg.as_ptr());
@@ -94,7 +95,7 @@ impl Weechat {
         let printf_date_tags = self.get().printf_date_tags.unwrap();
 
         let fmt = CString::new("%s").unwrap();
-        let msg = CString::new(msg).unwrap();
+        let msg = LossyCString::new(msg);
 
         unsafe {
             printf_date_tags(
@@ -112,7 +113,7 @@ impl Weechat {
     pub fn color(&self, color_name: &str) -> &str {
         let weechat_color = self.get().color.unwrap();
 
-        let color_name = CString::new(color_name).unwrap_or_default();
+        let color_name = LossyCString::new(color_name);
         unsafe {
             let color = weechat_color(color_name.as_ptr());
             CStr::from_ptr(color).to_str().unwrap_or_default()
@@ -125,8 +126,8 @@ impl Weechat {
     pub fn info_get(&self, info_name: &str, arguments: &str) -> Option<&str> {
         let info_get = self.get().info_get.unwrap();
 
-        let info_name = CString::new(info_name).unwrap_or_default();
-        let arguments = CString::new(arguments).unwrap_or_default();
+        let info_name = LossyCString::new(info_name);
+        let arguments = LossyCString::new(arguments);
 
         unsafe {
             let info =

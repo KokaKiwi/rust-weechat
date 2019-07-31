@@ -1,9 +1,9 @@
 #![warn(missing_docs)]
 
 //! Weechat Buffer module containing Buffer and Nick types.
-use crate::Weechat;
+use crate::{LossyCString, Weechat};
 use libc::{c_char, c_int};
-use std::ffi::{CStr, CString};
+use std::ffi::CStr;
 use std::os::raw::c_void;
 use std::ptr;
 use weechat_sys::{
@@ -49,8 +49,8 @@ impl Weechat {
     ) -> Option<Buffer> {
         let buffer_search = self.get().buffer_search.unwrap();
 
-        let plugin_name = CString::new(plugin_name).unwrap_or_default();
-        let buffer_name = CString::new(buffer_name).unwrap_or_default();
+        let plugin_name = LossyCString::new(plugin_name);
+        let buffer_name = LossyCString::new(buffer_name);
 
         let buf_ptr = unsafe {
             buffer_search(plugin_name.as_ptr(), buffer_name.as_ptr())
@@ -136,7 +136,7 @@ impl Weechat {
             Box::leak(buffer_pointers);
 
         let buf_new = self.get().buffer_new.unwrap();
-        let c_name = CString::new(name).unwrap();
+        let c_name = LossyCString::new(name);
 
         let c_input_cb: Option<WeechatInputCbT> = match input_cb {
             Some(_) => Some(c_input_cb::<A, B>),
@@ -218,7 +218,7 @@ impl Nick {
     pub fn get_string(&self, property: &str) -> Option<&str> {
         let weechat = self.get_weechat();
         let get_string = weechat.get().nicklist_nick_get_string.unwrap();
-        let c_property = CString::new(property).unwrap();
+        let c_property = LossyCString::new(property);
         unsafe {
             let ret = get_string(self.buf_ptr, self.ptr, c_property.as_ptr());
 
@@ -277,7 +277,7 @@ impl Buffer {
         let weechat = Weechat::from_ptr(self.weechat);
         let printf_date_tags = weechat.get().printf_date_tags.unwrap();
 
-        let c_message = CString::new(message).unwrap_or_default();
+        let c_message = LossyCString::new(message);
 
         unsafe {
             printf_date_tags(self.ptr, 0, ptr::null(), c_message.as_ptr())
@@ -296,10 +296,10 @@ impl Buffer {
 
         // TODO this conversions can fail if any of those strings contain a
         // null byte.
-        let c_nick = CString::new(nick.name).unwrap();
-        let color = CString::new(nick.color).unwrap();
-        let prefix = CString::new(nick.prefix).unwrap();
-        let prefix_color = CString::new(nick.prefix_color).unwrap();
+        let c_nick = LossyCString::new(nick.name);
+        let color = LossyCString::new(nick.color);
+        let prefix = LossyCString::new(nick.prefix);
+        let prefix_color = LossyCString::new(nick.prefix_color);
         let add_nick = weechat.get().nicklist_add_nick.unwrap();
 
         let group_ptr = match group {
@@ -340,8 +340,8 @@ impl Buffer {
         let weechat = Weechat::from_ptr(self.weechat);
         let add_group = weechat.get().nicklist_add_group.unwrap();
 
-        let c_name = CString::new(name).unwrap();
-        let c_color = CString::new(color).unwrap();
+        let c_name = LossyCString::new(name);
+        let c_color = LossyCString::new(color);
 
         let group_ptr = match parent_group {
             Some(g) => g.ptr,
@@ -368,8 +368,8 @@ impl Buffer {
         let weechat = Weechat::from_ptr(self.weechat);
 
         let buffer_set = weechat.get().buffer_set.unwrap();
-        let option = CString::new(property).unwrap();
-        let value = CString::new(value).unwrap();
+        let option = LossyCString::new(property);
+        let value = LossyCString::new(value);
 
         unsafe { buffer_set(self.ptr, option.as_ptr(), value.as_ptr()) };
     }
@@ -378,7 +378,7 @@ impl Buffer {
         let weechat = Weechat::from_ptr(self.weechat);
 
         let buffer_get = weechat.get().buffer_get_string.unwrap();
-        let property = CString::new(property).unwrap();
+        let property = LossyCString::new(property);
 
         unsafe {
             let value = buffer_get(self.ptr, property.as_ptr());

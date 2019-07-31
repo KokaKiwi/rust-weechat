@@ -12,7 +12,7 @@ use crate::config_options::{
     ConfigOption, IntegerOption, OptionDescription, OptionPointers, OptionType,
     StringOption,
 };
-use crate::Weechat;
+use crate::{LossyCString, Weechat};
 use weechat_sys::{
     t_config_file, t_config_option, t_config_section, t_weechat_plugin,
     WEECHAT_RC_ERROR, WEECHAT_RC_OK,
@@ -112,7 +112,7 @@ impl<T> Config<T> {
 
         let new_section = weechat.get().config_new_section.unwrap();
 
-        let name = CString::new(section_info.name).unwrap_or_default();
+        let name = LossyCString::new(section_info.name);
 
         let ptr = unsafe {
             new_section(
@@ -325,15 +325,13 @@ impl ConfigSection {
 
         let weechat = Weechat::from_ptr(self.weechat_ptr);
 
-        let name = CString::new(option_description.name).unwrap();
-        let description = CString::new(option_description.description).unwrap();
+        let name = LossyCString::new(option_description.name);
+        let description = LossyCString::new(option_description.description);
         let option_type =
             CString::new(option_description.option_type.as_str()).unwrap();
-        let string_values =
-            CString::new(option_description.string_values).unwrap();
-        let default_value =
-            CString::new(option_description.default_value).unwrap();
-        let value = CString::new(option_description.value).unwrap();
+        let string_values = LossyCString::new(option_description.string_values);
+        let default_value = LossyCString::new(option_description.default_value);
+        let value = LossyCString::new(option_description.value);
 
         let option_pointers = Box::new(OptionPointers::<T, A, B, C> {
             weechat_ptr: self.weechat_ptr,
@@ -431,7 +429,7 @@ impl Weechat {
             WEECHAT_RC_OK
         }
 
-        let c_name = CString::new(name).unwrap();
+        let c_name = LossyCString::new(name);
 
         let config_pointers = Box::new(ConfigPointers::<T> {
             reload_cb: reload_callback,
