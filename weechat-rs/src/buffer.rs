@@ -563,4 +563,14 @@ impl Buffer {
         let buffer_clear = weechat.get().buffer_clear.unwrap();
         unsafe { buffer_clear(self.ptr) }
     }
+
+    /// Get the contents of the input
+    pub fn input(&self) -> &str {
+        self.get_string("input").unwrap()
+    }
+
+    /// Switch to the buffer
+    pub fn switch_to(&self) {
+        self.set("display", "1");
+    }
 }
