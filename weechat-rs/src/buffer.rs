@@ -219,15 +219,15 @@ impl Nick {
         let weechat = self.get_weechat();
         let get_string = weechat.get().nicklist_nick_get_string.unwrap();
         let c_property = CString::new(property).unwrap();
-        let value = unsafe {
+        unsafe {
             let ret = get_string(self.buf_ptr, self.ptr, c_property.as_ptr());
 
             if ret.is_null() {
                 None
             } else {
-                CStr::from_ptr(ret).to_str().unwrap_or_default()
+                Some(CStr::from_ptr(ret).to_str().unwrap_or_default())
             }
-        };
+        }
     }
 
     /// Get the name property of the nick.
