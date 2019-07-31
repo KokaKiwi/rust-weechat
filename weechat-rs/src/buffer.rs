@@ -63,6 +63,19 @@ impl Weechat {
         }
     }
 
+    /// Get the currently open buffer
+    pub fn current(&self) -> Option<Buffer> {
+        let buffer_search = self.get().buffer_search.unwrap();
+
+        let buf_ptr =
+            unsafe { buffer_search(ptr::null_mut(), ptr::null_mut()) };
+        if buf_ptr.is_null() {
+            None
+        } else {
+            Some(Buffer::from_ptr(self.ptr, buf_ptr))
+        }
+    }
+
     /// Create a new Weechat buffer
     /// * `name` - Name of the new buffer
     /// * `input_cb` - Callback that will be called when something is entered
@@ -384,6 +397,16 @@ impl Buffer {
                 Some(CStr::from_ptr(value).to_string_lossy())
             }
         }
+    }
+
+    /// Get the value of a buffer localvar
+    pub fn get_localvar(&self, property: &str) -> Option<&str> {
+        self.get_string(&format!("localvar_{}", property))
+    }
+
+    /// Set the value of a buffer localvar
+    pub fn set_localvar(&self, property: &str, value: &str) {
+        self.set(&format!("localvar_set_{}", property), value)
     }
 
     /// Get the full name of the buffer.
