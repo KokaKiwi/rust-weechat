@@ -2,9 +2,9 @@ pub mod buffer;
 pub mod config;
 pub mod config_options;
 pub mod hooks;
+pub mod infolist;
 pub mod plugin;
 pub mod weechat;
-pub mod infolist;
 
 pub use weechat_macro::weechat_plugin;
 
@@ -20,4 +20,4 @@ pub use config_options::{
 
 pub use hooks::{CommandDescription, CommandHook, FdHook, FdHookMode};
 
-pub use infolist::{Infolist};
+pub use infolist::Infolist;

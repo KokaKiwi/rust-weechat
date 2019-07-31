@@ -1,8 +1,8 @@
 use std::time::Instant;
 use weechat::{
-    ArgsWeechat, Buffer, CommandHook, CommandDescription, Config,
-    ConfigSectionInfo, NickArgs, Weechat, WeechatPlugin,
-    WeechatResult, StringOption, ConfigOption, weechat_plugin
+    weechat_plugin, ArgsWeechat, Buffer, CommandDescription, CommandHook,
+    Config, ConfigOption, ConfigSectionInfo, NickArgs, StringOption, Weechat,
+    WeechatPlugin, WeechatResult,
 };
 
 struct SamplePlugin {
@@ -112,7 +112,7 @@ impl WeechatPlugin for SamplePlugin {
             "",
             false,
             Some(SamplePlugin::option_change_cb),
-            None::<String>
+            None::<String>,
         );
 
         Ok(SamplePlugin {

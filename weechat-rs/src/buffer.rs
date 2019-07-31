@@ -1,11 +1,11 @@
 #![warn(missing_docs)]
 
 //! Weechat Buffer module containing Buffer and Nick types.
+use crate::Weechat;
 use libc::{c_char, c_int};
 use std::ffi::{CStr, CString};
 use std::os::raw::c_void;
 use std::ptr;
-use crate::Weechat;
 use weechat_sys::{
     t_gui_buffer, t_gui_nick, t_gui_nick_group, t_weechat_plugin,
     WEECHAT_RC_ERROR, WEECHAT_RC_OK,
@@ -45,7 +45,7 @@ impl Weechat {
     pub fn buffer_search(
         &self,
         plugin_name: &str,
-        buffer_name: &str
+        buffer_name: &str,
     ) -> Option<Buffer> {
         let buffer_search = self.get().buffer_search.unwrap();
 
@@ -383,7 +383,6 @@ impl Buffer {
             } else {
                 CStr::from_ptr(value).to_str().unwrap_or_default()
             }
-
         }
     }
 

@@ -1,15 +1,14 @@
-#![recursion_limit="256"]
+#![recursion_limit = "256"]
 
 extern crate proc_macro;
 use proc_macro2::{Ident, Literal};
 use std::collections::HashMap;
 
-use syn::{parse_macro_input, Error, LitStr};
 use syn::parse::{Parse, ParseStream, Result};
 use syn::punctuated::Punctuated;
+use syn::{parse_macro_input, Error, LitStr};
 
 use quote::quote;
-
 
 struct WeechatPluginInfo {
     plugin: syn::Ident,
@@ -59,18 +58,18 @@ impl Parse for WeechatVariable {
             "description" => Ok(WeechatVariable::Description(value)),
             "version" => Ok(WeechatVariable::Version(value)),
             "license" => Ok(WeechatVariable::License(value)),
-            _ => Err(Error::new(key.span(), "expected one of bla"))
+            _ => Err(Error::new(key.span(), "expected one of bla")),
         }
     }
 }
-
 
 impl Parse for WeechatPluginInfo {
     fn parse(input: ParseStream) -> Result<Self> {
         let plugin: syn::Ident = input.parse()?;
         input.parse::<syn::Token![,]>()?;
 
-        let args: Punctuated::<WeechatVariable, syn::Token![,]> = input.parse_terminated(WeechatVariable::parse)?;
+        let args: Punctuated<WeechatVariable, syn::Token![,]> =
+            input.parse_terminated(WeechatVariable::parse)?;
         let mut variables = HashMap::new();
 
         for arg in args.pairs() {
@@ -103,7 +102,7 @@ pub fn weechat_plugin(input: proc_macro::TokenStream) -> proc_macro::TokenStream
         author,
         description,
         version,
-        license
+        license,
     } = parse_macro_input!(input as WeechatPluginInfo);
 
     let (name_len, name) = name;

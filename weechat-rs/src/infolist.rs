@@ -2,13 +2,13 @@
 
 //! Weechat Infolist module.
 
-use std::ffi::{CString, CStr};
+use std::ffi::{CStr, CString};
 use std::os::raw::c_void;
 use std::ptr;
 
-use weechat_sys::{t_infolist, t_gui_buffer, t_weechat_plugin};
+use weechat_sys::{t_gui_buffer, t_infolist, t_weechat_plugin};
 
-use crate::{Weechat, Buffer};
+use crate::{Buffer, Weechat};
 
 /// Weechat Infolist type.
 pub struct Infolist {
@@ -31,7 +31,11 @@ impl Weechat {
     ///     C API documentation for valid values.
     /// Returns an Infolist object that behaves like a cursor that can be moved
     /// back and forth to access individual Infolist items.
-    pub fn infolist_get(&self, name: &str, arguments: &str) -> Option<Infolist> {
+    pub fn infolist_get(
+        &self,
+        name: &str,
+        arguments: &str,
+    ) -> Option<Infolist> {
         let name = CString::new(name).unwrap_or_default();
         let arguments = CString::new(arguments).unwrap_or_default();
 
@@ -41,14 +45,17 @@ impl Weechat {
                 self.ptr,
                 name.as_ptr(),
                 ptr::null_mut(),
-                arguments.as_ptr()
+                arguments.as_ptr(),
             )
         };
 
         if ptr.is_null() {
             None
         } else {
-            Some(Infolist { ptr, weechat_ptr: self.ptr })
+            Some(Infolist {
+                ptr,
+                weechat_ptr: self.ptr,
+            })
         }
     }
 }
@@ -95,7 +102,7 @@ impl Infolist {
 
         let name = CString::new(name).unwrap_or_default();
 
-        unsafe {infolist_pointer(self.ptr, name.as_ptr())}
+        unsafe { infolist_pointer(self.ptr, name.as_ptr()) }
     }
 
     /// Get the buffer of the current infolist item.

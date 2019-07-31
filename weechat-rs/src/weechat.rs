@@ -129,11 +129,8 @@ impl Weechat {
         let arguments = CString::new(arguments).unwrap_or_default();
 
         unsafe {
-            let info = info_get(
-                self.ptr,
-                info_name.as_ptr(),
-                arguments.as_ptr()
-            );
+            let info =
+                info_get(self.ptr, info_name.as_ptr(), arguments.as_ptr());
             if info.is_null() {
                 ""
             } else {

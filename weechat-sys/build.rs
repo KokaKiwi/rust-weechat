@@ -1,6 +1,6 @@
+use bindgen::Bindings;
 use std::env;
 use std::path::PathBuf;
-use bindgen::Bindings;
 
 fn build(file: &str) -> Result<Bindings, ()> {
     const INCLUDED_TYPES: &[&str] = &[
@@ -31,9 +31,7 @@ fn main() {
 
     let bindings = match bindings {
         Ok(b) => b,
-        Err(_) => {
-            build("src/weechat-plugin.h").expect("Unable to generate bindings")
-        }
+        Err(_) => build("src/weechat-plugin.h").expect("Unable to generate bindings"),
     };
 
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());

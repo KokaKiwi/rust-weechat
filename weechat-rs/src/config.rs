@@ -15,7 +15,7 @@ use crate::config_options::{
 use crate::Weechat;
 use weechat_sys::{
     t_config_file, t_config_option, t_config_section, t_weechat_plugin,
-    WEECHAT_RC_OK, WEECHAT_RC_ERROR
+    WEECHAT_RC_ERROR, WEECHAT_RC_OK,
 };
 
 /// Weechat configuration file
@@ -191,7 +191,7 @@ impl ConfigSection {
             change_cb,
             change_cb_data,
             None,
-            None::<String>
+            None::<String>,
         );
         StringOption {
             ptr,
@@ -232,7 +232,7 @@ impl ConfigSection {
             change_cb,
             change_cb_data,
             None,
-            None::<String>
+            None::<String>,
         );
         IntegerOption {
             ptr,
@@ -261,7 +261,8 @@ impl ConfigSection {
             _data: *mut c_void,
             option_pointer: *mut t_config_option,
             value: *const c_char,
-        ) -> c_int where
+        ) -> c_int
+        where
             T: ConfigOption,
         {
             let value = CStr::from_ptr(value).to_str();
