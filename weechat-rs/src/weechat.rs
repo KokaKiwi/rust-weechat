@@ -142,6 +142,28 @@ impl Weechat {
         }
     }
 
+    /// Retrieve a prefix value
+    ///
+    /// Valid prefixes are:
+    /// * error
+    /// * network
+    /// * action
+    /// * join
+    /// * quit
+    ///
+    /// An empty string will be returned if the prefix is not found
+    pub fn get_prefix(&self, prefix: &str) -> &str {
+        let prefix_fn = self.get().prefix.unwrap();
+
+        let prefix = CString::new(prefix).unwrap_or_default();
+
+        unsafe {
+            CStr::from_ptr(prefix_fn(prefix.as_ptr()))
+                .to_str()
+                .unwrap_or_default()
+        }
+    }
+
     /// Get some info from Weechat or a plugin.
     /// * `info_name` - name the info
     /// * `arguments` - arguments for the info
