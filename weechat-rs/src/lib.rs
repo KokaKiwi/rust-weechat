@@ -1,7 +1,3 @@
-extern crate libc;
-extern crate weechat_sys;
-extern crate weechat_macro;
-
 pub mod buffer;
 pub mod config;
 pub mod config_options;

@@ -5,7 +5,7 @@ use libc::{c_char, c_int};
 use std::ffi::{CStr, CString};
 use std::os::raw::c_void;
 use std::ptr;
-use weechat::Weechat;
+use crate::Weechat;
 use weechat_sys::{
     t_gui_buffer, t_gui_nick, t_gui_nick_group, t_weechat_plugin,
     WEECHAT_RC_ERROR, WEECHAT_RC_OK,

@@ -1,5 +1,5 @@
 use libc::c_int;
-use weechat::{ArgsWeechat, Weechat};
+use crate::{ArgsWeechat, Weechat};
 
 pub trait WeechatPlugin: Sized {
     fn init(weechat: Weechat, args: ArgsWeechat) -> WeechatResult<Self>;

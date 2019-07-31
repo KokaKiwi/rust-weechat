@@ -8,8 +8,7 @@ use std::ptr;
 
 use weechat_sys::{t_infolist, t_gui_buffer, t_weechat_plugin};
 
-use buffer::Buffer;
-use weechat::Weechat;
+use crate::{Weechat, Buffer};
 
 /// Weechat Infolist type.
 pub struct Infolist {

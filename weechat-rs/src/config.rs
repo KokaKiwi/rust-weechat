@@ -8,11 +8,11 @@ use std::ffi::{CStr, CString};
 use std::os::raw::c_void;
 use std::ptr;
 
-use config_options::{
+use crate::config_options::{
     ConfigOption, IntegerOption, OptionDescription, OptionPointers, OptionType,
     StringOption,
 };
-use weechat::Weechat;
+use crate::Weechat;
 use weechat_sys::{
     t_config_file, t_config_option, t_config_section, t_weechat_plugin,
     WEECHAT_RC_OK, WEECHAT_RC_ERROR

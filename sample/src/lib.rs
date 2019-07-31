@@ -1,5 +1,3 @@
-extern crate weechat;
-
 use std::time::Instant;
 use weechat::{
     ArgsWeechat, Buffer, CommandHook, CommandDescription, Config,

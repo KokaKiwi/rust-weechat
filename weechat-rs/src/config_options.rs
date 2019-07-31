@@ -1,6 +1,6 @@
 #![warn(missing_docs)]
 
-use weechat::Weechat;
+use crate::Weechat;
 use weechat_sys::{t_config_option, t_weechat_plugin};
 
 #[derive(Default)]

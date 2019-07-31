@@ -13,8 +13,7 @@ use std::ptr;
 
 use weechat_sys::{t_gui_buffer, t_hook, t_weechat_plugin, WEECHAT_RC_OK};
 
-use buffer::Buffer;
-use weechat::{ArgsWeechat, Weechat};
+use crate::{ArgsWeechat, Buffer, Weechat};
 
 /// Weechat Hook type. The hook is unhooked automatically when the object is
 /// dropped.
