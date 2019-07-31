@@ -1,5 +1,6 @@
 extern crate libc;
 extern crate weechat_sys;
+extern crate weechat_macro;
 
 pub mod buffer;
 pub mod config;
@@ -8,6 +9,8 @@ pub mod hooks;
 pub mod plugin;
 pub mod weechat;
 pub mod infolist;
+
+pub use weechat_macro::weechat_plugin;
 
 pub use plugin::{WeechatPlugin, WeechatResult};
 pub use weechat::{ArgsWeechat, Weechat};

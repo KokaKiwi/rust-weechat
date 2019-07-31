@@ -15,4 +15,3 @@ crate-type = ["dylib"]
 libc = "*"
 weechat = { path = "../weechat-rs" }
 weechat-sys = { path = "../weechat-sys" }
-weechat-macro = { path = "../weechat-macro" }

@@ -1,13 +1,10 @@
 extern crate weechat;
-extern crate libc;
-
-use::weechat_macro::weechat_plugin;
 
 use std::time::Instant;
 use weechat::{
     ArgsWeechat, Buffer, CommandHook, CommandDescription, Config,
     ConfigSectionInfo, NickArgs, Weechat, WeechatPlugin,
-    WeechatResult, StringOption, ConfigOption
+    WeechatResult, StringOption, ConfigOption, weechat_plugin
 };
 
 struct SamplePlugin {
