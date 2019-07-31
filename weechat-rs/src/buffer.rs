@@ -320,6 +320,30 @@ impl Buffer {
         }
     }
 
+    /// Search for a nicklist group by name
+    pub fn search_nicklist_group(&self, name: &str) -> Option<NickGroup> {
+        let weechat = Weechat::from_ptr(self.weechat);
+
+        let nicklist_search_group =
+            weechat.get().nicklist_search_group.unwrap();
+
+        let name = CString::new(name).unwrap_or_default();
+
+        unsafe {
+            let group =
+                nicklist_search_group(self.ptr, ptr::null_mut(), name.as_ptr());
+
+            if group.is_null() {
+                None
+            } else {
+                Some(NickGroup {
+                    ptr: group,
+                    buf_ptr: self.ptr,
+                })
+            }
+        }
+    }
+
     /// Create and add a new nick to the buffer nicklist. Returns the newly
     /// created nick.
     /// The nick won't be removed from the nicklist if the returned nick is
@@ -479,6 +503,11 @@ impl Buffer {
     /// Disable the nicklist for this buffer.
     pub fn disable_nicklist(&self) {
         self.set("nicklist", "0")
+    }
+
+    /// Enable the nicklist for this buffer.
+    pub fn enable_nicklist(&self) {
+        self.set("nicklist", "1")
     }
 
     /// Set the title of the buffer.
