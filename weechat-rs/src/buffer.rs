@@ -4,7 +4,7 @@
 use crate::{LossyCString, Weechat};
 use libc::{c_char, c_int};
 use std::borrow::Cow;
-use std::ffi::CStr;
+use std::ffi::{CStr, CString};
 use std::os::raw::c_void;
 use std::ptr;
 use weechat_sys::{
@@ -486,7 +486,7 @@ impl Buffer {
     }
 
     /// Get the value of a buffer localvar
-    pub fn get_localvar(&self, property: &str) -> Option<&str> {
+    pub fn get_localvar(&self, property: &str) -> Option<Cow<str>> {
         self.get_string(&format!("localvar_{}", property))
     }
 
@@ -496,7 +496,7 @@ impl Buffer {
     }
 
     /// Get the full name of the buffer.
-    pub fn get_full_name(&self) -> &str {
+    pub fn get_full_name(&self) -> Cow<str> {
         self.get_string("full_name").unwrap()
     }
 
@@ -506,7 +506,7 @@ impl Buffer {
     }
 
     /// Get the name of the buffer.
-    pub fn get_name(&self) -> &str {
+    pub fn get_name(&self) -> Cow<str> {
         self.get_string("name").unwrap()
     }
 
@@ -516,7 +516,7 @@ impl Buffer {
     }
 
     /// Get the short_name of the buffer.
-    pub fn get_short_name(&self) -> &str {
+    pub fn get_short_name(&self) -> Cow<str> {
         self.get_string("short_name").unwrap()
     }
 
@@ -565,7 +565,7 @@ impl Buffer {
     }
 
     /// Get the contents of the input
-    pub fn input(&self) -> &str {
+    pub fn input(&self) -> Cow<str> {
         self.get_string("input").unwrap()
     }
 
