@@ -1,4 +1,5 @@
 pub mod buffer;
+pub mod completion;
 pub mod config;
 pub mod config_options;
 pub mod hooks;
