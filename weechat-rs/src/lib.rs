@@ -1,3 +1,4 @@
+pub mod bar;
 pub mod buffer;
 pub mod completion;
 pub mod config;
