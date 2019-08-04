@@ -11,7 +11,7 @@ pub mod weechat;
 pub use weechat_macro::weechat_plugin;
 
 pub use plugin::{WeechatPlugin, WeechatResult};
-pub use weechat::{ArgsWeechat, Weechat};
+pub use weechat::{ArgsWeechat, OptionChanged, Weechat};
 
 pub use buffer::{Buffer, Nick, NickArgs};
 
@@ -20,7 +20,12 @@ pub use config_options::{
     BooleanOption, ColorOption, ConfigOption, IntegerOption, StringOption,
 };
 
-pub use hooks::{CommandDescription, CommandHook, FdHook, FdHookMode};
+pub use hooks::{
+    CommandDescription, CommandHook, CommandRunHook, FdHook, FdHookMode,
+    SignalHook, SignalHookValue, TimerHook,
+};
+
+pub use completion::{Completion, CompletionHook, CompletionInsertionMethod};
 
 pub use infolist::Infolist;
 
