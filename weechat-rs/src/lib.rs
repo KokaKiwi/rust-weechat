@@ -21,7 +21,15 @@ pub use config_options::{
 pub use hooks::{CommandDescription, CommandHook, FdHook, FdHookMode};
 
 pub use infolist::Infolist;
+
 use std::ffi::CString;
+
+/// Status values for weechat callbacks
+pub enum ReturnCode {
+    Ok = weechat_sys::WEECHAT_RC_OK as isize,
+    OkEat = weechat_sys::WEECHAT_RC_OK_EAT as isize,
+    Error = weechat_sys::WEECHAT_RC_ERROR as isize,
+}
 
 pub(crate) struct LossyCString;
 
