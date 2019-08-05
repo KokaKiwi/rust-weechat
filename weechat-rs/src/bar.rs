@@ -22,6 +22,10 @@ pub struct BarItem {
 
 impl Drop for BarItem {
     fn drop(&mut self) {
+        // don't unhook the "partial" objects passed to callbacks
+        if self._data.is_none() {
+            return;
+        }
         let weechat = Weechat::from_ptr(self.weechat_ptr);
         let bar_item_remove = weechat.get().bar_item_remove.unwrap();
         unsafe { bar_item_remove(self.ptr) };
