@@ -11,6 +11,7 @@ use std::ffi::CStr;
 use std::os::raw::c_void;
 use std::os::unix::io::AsRawFd;
 use std::ptr;
+use std::time::Duration;
 
 use weechat_sys::{t_gui_buffer, t_hook, t_weechat_plugin, WEECHAT_RC_OK};
 
@@ -83,6 +84,7 @@ struct FdHookData<T, F> {
     fd_object: F,
 }
 
+/// Hook for a weechat command, the hook is removed when the object is dropped.
 pub struct CommandRunHook<T> {
     _hook: Hook,
     _hook_data: Box<CommandRunHookData<T>>,
@@ -94,6 +96,7 @@ struct CommandRunHookData<T> {
     weechat_ptr: *mut t_weechat_plugin,
 }
 
+/// Hook for a signal, the hook is removed when the object is dropped.
 pub struct SignalHook<T> {
     _hook: Hook,
     _hook_data: Box<SignalHookData<T>>,
@@ -108,11 +111,11 @@ struct SignalHookData<T> {
 /// The type of data returned by a signal
 #[derive(Debug)]
 pub enum SignalHookValue {
-    /// String data returned by a signal
+    /// String data
     String(String),
-    /// An Integer returned by a signal
+    /// Integer data
     Integer(i32),
-    /// A Pointer returned by a signal
+    /// Pointer data
     Pointer(*mut c_void),
 }
 
@@ -143,6 +146,7 @@ impl SignalHookValue {
     }
 }
 
+/// A hook for a timer, the hook will be removed when the object is dropped.
 pub struct TimerHook<T> {
     _hook: Hook,
     _hook_data: Box<TimerHookData<T>>,
@@ -318,9 +322,20 @@ impl Weechat {
         }
     }
 
+    /// Create a timer that will repeatedly fire.
+    ///
+    /// * `interval` - The delay between calls in milliseconds.
+    /// * `align_second` - The alignment on a second. For example, if current time is 09:00, if
+    ///     interval = 60000 (60 seconds), and align_second = 60, then timer is called each minute when
+    ///     second is 0.
+    /// * `max_calls` - The number of calls to timer (if 0, then timer has no end)
+    /// * `callback` - A function that will be called when the timer fires, the `remaining` argument
+    ///     will be -1 if the timer has no end.
+    /// * `callback_data` - Data that will be passed to the callback every time
+    ///     the callback runs. This data will be freed when the hook is unhooked.
     pub fn hook_timer<T>(
         &self,
-        interval: i64,
+        interval: Duration,
         align_second: i32,
         max_calls: i32,
         callback: fn(data: &T, weechat: &Weechat, remaining: i32),
@@ -360,7 +375,7 @@ impl Weechat {
         let hook_ptr = unsafe {
             hook_timer(
                 self.ptr,
-                interval,
+                interval.as_millis() as i64,
                 align_second,
                 max_calls,
                 Some(c_hook_cb::<T>),
@@ -380,6 +395,12 @@ impl Weechat {
         }
     }
 
+    /// Hook a command when Weechat runs it.
+    ///
+    /// * `command` - The command to hook (wildcard `*` is allowed).
+    /// * `callback` - A function that will be called when the command is run.
+    /// * `callback_data` - Data that will be passed to the callback every time
+    ///     the callback runs. This data will be freed when the hook is unhooked.
     pub fn hook_command_run<T>(
         &self,
         command: &str,
@@ -438,6 +459,12 @@ impl Weechat {
         }
     }
 
+    /// Hook a signal.
+    ///
+    /// * `signal` - The signal to hook (wildcard `*` is allowed).
+    /// * `callback` - A function that will be called when the signal is received.
+    /// * `callback_data` - Data that will be passed to the callback every time
+    ///     the callback runs. This data will be freed when the hook is unhooked.
     pub fn hook_signal<T>(
         &self,
         signal: &str,

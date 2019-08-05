@@ -25,7 +25,7 @@ pub use hooks::{
     SignalHook, SignalHookValue, TimerHook,
 };
 
-pub use completion::{Completion, CompletionHook, CompletionInsertionMethod};
+pub use completion::{Completion, CompletionHook, CompletionPosition};
 
 pub use infolist::Infolist;
 

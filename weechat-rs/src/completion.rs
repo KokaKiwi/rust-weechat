@@ -9,24 +9,29 @@ use weechat_sys::{t_gui_buffer, t_gui_completion, t_weechat_plugin};
 use crate::hooks::Hook;
 use crate::{Buffer, LossyCString, ReturnCode, Weechat};
 
+/// A handle to a completion item.
 pub struct Completion {
     weechat_ptr: *mut t_weechat_plugin,
     ptr: *mut t_gui_completion,
 }
 
+/// The positions an entry can be added to a completion list.
 #[derive(Clone, Copy)]
-pub enum CompletionInsertionMethod {
+pub enum CompletionPosition {
+    /// Insert the item in a way that keeps the list sorted.
     Sorted,
+    // Insert the item at the beginning of the list.
     Beginning,
+    // Insert the item at the end of the list.
     End,
 }
 
-impl CompletionInsertionMethod {
+impl CompletionPosition {
     pub(crate) fn value(&self) -> &str {
         match self {
-            CompletionInsertionMethod::Sorted => "sort",
-            CompletionInsertionMethod::Beginning => "beginning",
-            CompletionInsertionMethod::End => "end",
+            CompletionPosition::Sorted => "sort",
+            CompletionPosition::Beginning => "beginning",
+            CompletionPosition::End => "end",
         }
     }
 }
@@ -42,15 +47,17 @@ impl Completion {
         }
     }
 
+    /// Add a word for completion, keeping the list sorted.
     pub fn add(&self, word: &str) {
-        self.add_with_options(word, false, CompletionInsertionMethod::Sorted)
+        self.add_with_options(word, false, CompletionPosition::Sorted)
     }
 
+    /// Add a word for completion in a specific position specific if the word is a nick name
     pub fn add_with_options(
         &self,
         word: &str,
-        nick: bool,
-        method: CompletionInsertionMethod,
+        is_nick: bool,
+        position: CompletionPosition,
     ) {
         let weechat = Weechat::from_ptr(self.weechat_ptr);
 
@@ -58,19 +65,20 @@ impl Completion {
             weechat.get().hook_completion_list_add.unwrap();
 
         let word = LossyCString::new(word);
-        let method = LossyCString::new(method.value());
+        let method = LossyCString::new(position.value());
 
         unsafe {
             hook_completion_list_add(
                 self.ptr,
                 word.as_ptr(),
-                nick as i32,
+                is_nick as i32,
                 method.as_ptr(),
             );
         }
     }
 }
 
+/// Hook for a completion item, the hook is removed when the object is dropped.
 pub struct CompletionHook<T> {
     _hook: Hook,
     _hook_data: Box<CompletionHookData<T>>,
@@ -83,6 +91,14 @@ struct CompletionHookData<T> {
 }
 
 impl Weechat {
+    /// Hook a completion.
+    ///
+    /// * `completion_item` - The name of the completion item
+    /// * `description` - The description of the completion item
+    /// * `callback` - A function that will be called when the completion is used, the callback must
+    ///     populate the words for the completion
+    /// * `callback_data` - Data that will be passed to the callback every time
+    ///     the callback runs. This data will be freed when the hook is unhooked.
     pub fn hook_completion<T>(
         &self,
         completion_item: &str,

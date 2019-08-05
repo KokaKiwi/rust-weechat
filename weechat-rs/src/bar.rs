@@ -12,13 +12,14 @@ struct BarItemCbData {
     weechat_ptr: *mut t_weechat_plugin,
 }
 
+/// A handle to a bar item.
 pub struct BarItem {
     ptr: *mut t_gui_bar_item,
     _data: Option<Box<BarItemCbData>>,
 }
 
 impl Weechat {
-    // TODO: Provide window object
+    // TODO: Provide window object, the callback should accept a Window object wrapping a t_gui_window
     pub fn new_bar_item(
         &self,
         name: &str,
