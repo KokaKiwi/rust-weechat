@@ -4,7 +4,7 @@
 
 use libc::{c_char, c_int};
 use std::collections::HashMap;
-use std::ffi::{CStr, CString};
+use std::ffi::CStr;
 use std::os::raw::c_void;
 use std::ptr;
 
@@ -324,7 +324,7 @@ impl ConfigSection {
         let name = LossyCString::new(option_description.name);
         let description = LossyCString::new(option_description.description);
         let option_type =
-            CString::new(option_description.option_type.as_str()).unwrap();
+            LossyCString::new(option_description.option_type.as_str());
         let string_values = LossyCString::new(option_description.string_values);
         let default_value = LossyCString::new(option_description.default_value);
         let value = LossyCString::new(option_description.value);

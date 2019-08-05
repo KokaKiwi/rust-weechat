@@ -7,7 +7,7 @@ use weechat_sys::t_weechat_plugin;
 use crate::LossyCString;
 use libc::{c_char, c_int};
 use std::borrow::Cow;
-use std::ffi::{CStr, CString};
+use std::ffi::CStr;
 use std::{ptr, vec};
 
 /// An iterator over the arguments of a command, yielding a String value for
@@ -104,7 +104,7 @@ impl Weechat {
     pub fn log(&self, msg: &str) {
         let log_printf = self.get().log_printf.unwrap();
 
-        let fmt = CString::new("%s").unwrap();
+        let fmt = LossyCString::new("%s");
         let msg = LossyCString::new(msg);
 
         unsafe {
@@ -116,7 +116,7 @@ impl Weechat {
     pub fn print(&self, msg: &str) {
         let printf_date_tags = self.get().printf_date_tags.unwrap();
 
-        let fmt = CString::new("%s").unwrap();
+        let fmt = LossyCString::new("%s");
         let msg = LossyCString::new(msg);
 
         unsafe {
@@ -152,16 +152,12 @@ impl Weechat {
     /// * quit
     ///
     /// An empty string will be returned if the prefix is not found
-    pub fn get_prefix(&self, prefix: &str) -> &str {
+    pub fn get_prefix(&self, prefix: &str) -> Cow<str> {
         let prefix_fn = self.get().prefix.unwrap();
 
-        let prefix = CString::new(prefix).unwrap_or_default();
+        let prefix = LossyCString::new(prefix);
 
-        unsafe {
-            CStr::from_ptr(prefix_fn(prefix.as_ptr()))
-                .to_str()
-                .unwrap_or_default()
-        }
+        unsafe { CStr::from_ptr(prefix_fn(prefix.as_ptr())).to_string_lossy() }
     }
 
     /// Get some info from Weechat or a plugin.
@@ -189,17 +185,17 @@ impl Weechat {
     }
 
     /// Get value of a plugin option
-    pub fn get_plugin_option(&self, option: &str) -> Option<&str> {
+    pub fn get_plugin_option(&self, option: &str) -> Option<Cow<str>> {
         let config_get_plugin = self.get().config_get_plugin.unwrap();
 
-        let option_name = CString::new(option).unwrap_or_default();
+        let option_name = LossyCString::new(option);
 
         unsafe {
             let option = config_get_plugin(self.ptr, option_name.as_ptr());
             if option.is_null() {
                 None
             } else {
-                Some(CStr::from_ptr(option).to_str().unwrap_or_default())
+                Some(CStr::from_ptr(option).to_string_lossy())
             }
         }
     }
@@ -212,8 +208,8 @@ impl Weechat {
     ) -> OptionChanged {
         let config_set_plugin = self.get().config_set_plugin.unwrap();
 
-        let option_name = CString::new(option).unwrap_or_default();
-        let value = CString::new(value).unwrap_or_default();
+        let option_name = LossyCString::new(option);
+        let value = LossyCString::new(value);
 
         unsafe {
             let result = config_set_plugin(
@@ -229,10 +225,10 @@ impl Weechat {
     /// Evaluate a weechat expression and return the result
     //
     // TODO: Add hashtable options
-    pub fn eval_string_expression(&self, expr: &str) -> Option<&str> {
+    pub fn eval_string_expression(&self, expr: &str) -> Option<Cow<str>> {
         let string_eval_expression = self.get().string_eval_expression.unwrap();
 
-        let expr = CString::new(expr).unwrap_or_default();
+        let expr = LossyCString::new(expr);
 
         unsafe {
             let result = string_eval_expression(
@@ -245,7 +241,7 @@ impl Weechat {
             if result.is_null() {
                 None
             } else {
-                Some(CStr::from_ptr(result).to_str().unwrap_or_default())
+                Some(CStr::from_ptr(result).to_string_lossy())
             }
         }
     }

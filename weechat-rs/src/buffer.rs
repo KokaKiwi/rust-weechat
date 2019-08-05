@@ -4,7 +4,7 @@
 use crate::{LossyCString, Weechat};
 use libc::{c_char, c_int};
 use std::borrow::Cow;
-use std::ffi::{CStr, CString};
+use std::ffi::CStr;
 use std::os::raw::c_void;
 use std::ptr;
 use weechat_sys::{
@@ -297,7 +297,7 @@ impl Buffer {
         let weechat = Weechat::from_ptr(self.weechat);
         let printf_date_tags = weechat.get().printf_date_tags.unwrap();
 
-        let fmt_str = CString::new("%s").unwrap();
+        let fmt_str = LossyCString::new("%s");
         let c_message = LossyCString::new(message);
 
         unsafe {
@@ -316,9 +316,9 @@ impl Buffer {
         let weechat = Weechat::from_ptr(self.weechat);
         let printf_date_tags = weechat.get().printf_date_tags.unwrap();
 
-        let fmt_str = CString::new("%s").unwrap();
-        let tags = CString::new(tags).unwrap_or_default();
-        let message = CString::new(message).unwrap_or_default();
+        let fmt_str = LossyCString::new("%s");
+        let tags = LossyCString::new(tags);
+        let message = LossyCString::new(message);
 
         unsafe {
             printf_date_tags(
@@ -338,7 +338,7 @@ impl Buffer {
         let nicklist_search_group =
             weechat.get().nicklist_search_group.unwrap();
 
-        let name = CString::new(name).unwrap_or_default();
+        let name = LossyCString::new(name);
 
         unsafe {
             let group =
@@ -365,7 +365,7 @@ impl Buffer {
 
         let nicklist_search_nick = weechat.get().nicklist_search_nick.unwrap();
 
-        let nick = CString::new(nick).unwrap_or_default();
+        let nick = LossyCString::new(nick);
         let group_ptr = group.map(|g| g.ptr).unwrap_or(ptr::null_mut());
 
         unsafe {
