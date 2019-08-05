@@ -12,10 +12,20 @@ struct BarItemCbData {
     weechat_ptr: *mut t_weechat_plugin,
 }
 
-/// A handle to a bar item.
+/// A handle to a bar item. The bar item is automatically removed when the object is
+/// dropped.
 pub struct BarItem {
     ptr: *mut t_gui_bar_item,
+    weechat_ptr: *mut t_weechat_plugin,
     _data: Option<Box<BarItemCbData>>,
+}
+
+impl Drop for BarItem {
+    fn drop(&mut self) {
+        let weechat = Weechat::from_ptr(self.weechat_ptr);
+        let bar_item_remove = weechat.get().bar_item_remove.unwrap();
+        unsafe { bar_item_remove(self.ptr) };
+    }
 }
 
 impl Weechat {
@@ -40,6 +50,7 @@ impl Weechat {
 
             let item = BarItem {
                 ptr: bar_item,
+                weechat_ptr: data.weechat_ptr,
                 _data: None,
             };
 
@@ -71,6 +82,7 @@ impl Weechat {
 
         BarItem {
             ptr: hook_ptr,
+            weechat_ptr: self.ptr,
             _data: Some(hook_data),
         }
     }
