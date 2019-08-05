@@ -1,5 +1,6 @@
 use libc::{c_char, c_int};
-use std::ffi::{CStr, CString};
+use std::borrow::Cow;
+use std::ffi::CStr;
 use std::os::raw::c_void;
 use std::ptr;
 
@@ -57,7 +58,7 @@ impl Completion {
             weechat.get().hook_completion_list_add.unwrap();
 
         let word = LossyCString::new(word);
-        let method = CString::new(method.value()).unwrap();
+        let method = LossyCString::new(method.value());
 
         unsafe {
             hook_completion_list_add(
@@ -76,7 +77,7 @@ pub struct CompletionHook<T> {
 }
 
 struct CompletionHookData<T> {
-    callback: fn(&T, Buffer, &str, Completion) -> ReturnCode,
+    callback: fn(&T, Buffer, Cow<str>, Completion) -> ReturnCode,
     callback_data: T,
     weechat_ptr: *mut t_weechat_plugin,
 }
@@ -89,7 +90,7 @@ impl Weechat {
         callback: fn(
             data: &T,
             buffer: Buffer,
-            item: &str,
+            item: Cow<str>,
             completion: Completion,
         ) -> ReturnCode,
         callback_data: Option<T>,
@@ -111,7 +112,7 @@ impl Weechat {
             let buffer = Buffer::from_ptr(hook_data.weechat_ptr, buffer);
 
             let completion_item =
-                CStr::from_ptr(completion_item).to_str().unwrap_or_default();
+                CStr::from_ptr(completion_item).to_string_lossy();
 
             callback(
                 callback_data,

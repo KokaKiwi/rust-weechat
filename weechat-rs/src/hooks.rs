@@ -463,6 +463,7 @@ impl Weechat {
             let callback = hook_data.callback;
             let callback_data = &hook_data.callback_data;
 
+            // this cannot contain invalid utf
             let data_type =
                 CStr::from_ptr(data_type).to_str().unwrap_or_default();
             if let Some(value) =
