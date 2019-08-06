@@ -67,7 +67,7 @@ struct timeval;
  * please change the date with current one; for a second change at same
  * date, increment the 01, otherwise please keep 01.
  */
-#define WEECHAT_PLUGIN_API_VERSION "20181104-01"
+#define WEECHAT_PLUGIN_API_VERSION "20190413-01"
 
 /* macros for defining plugin infos */
 #define WEECHAT_PLUGIN_NAME(__name)                                     \
@@ -88,6 +88,12 @@ struct timeval;
 #define WEECHAT_RC_OK                               0
 #define WEECHAT_RC_OK_EAT                           1
 #define WEECHAT_RC_ERROR                           -1
+
+/* flags for string_split function */
+#define WEECHAT_STRING_SPLIT_STRIP_LEFT            (1 << 0)
+#define WEECHAT_STRING_SPLIT_STRIP_RIGHT           (1 << 1)
+#define WEECHAT_STRING_SPLIT_COLLAPSE_SEPS         (1 << 2)
+#define WEECHAT_STRING_SPLIT_KEEP_EOL              (1 << 3)
 
 /* return codes for config read functions/callbacks */
 #define WEECHAT_CONFIG_READ_OK                      0
@@ -289,6 +295,8 @@ struct t_weechat_plugin
     int (*strlen_screen) (const char *string);
     int (*string_match) (const char *string, const char *mask,
                          int case_sensitive);
+    int (*string_match_list) (const char *string, const char **masks,
+                              int case_sensitive);
     char *(*string_replace) (const char *string, const char *search,
                              const char *replace);
     char *(*string_expand_home) (const char *path);
@@ -314,7 +322,7 @@ struct t_weechat_plugin
                                                      const char *text),
                                    void *callback_data);
     char **(*string_split) (const char *string, const char *separators,
-                            int keep_eol, int num_items_max, int *num_items);
+                            int flags, int num_items_max, int *num_items);
     char **(*string_split_shell) (const char *string, int *num_items);
     void (*string_free_split) (char **split_string);
     char *(*string_build_with_split_string) (const char **split_string,
@@ -798,10 +806,10 @@ struct t_weechat_plugin
                                  const char *info_name,
                                  const char *description,
                                  const char *args_description,
-                                 const char *(*callback)(const void *pointer,
-                                                         void *data,
-                                                         const char *info_name,
-                                                         const char *arguments),
+                                 char *(*callback)(const void *pointer,
+                                                   void *data,
+                                                   const char *info_name,
+                                                   const char *arguments),
                                  const void *callback_pointer,
                                  void *callback_data);
     struct t_hook *(*hook_info_hashtable) (struct t_weechat_plugin *plugin,
@@ -983,6 +991,9 @@ struct t_weechat_plugin
     /* command */
     int (*command) (struct t_weechat_plugin *plugin,
                     struct t_gui_buffer *buffer, const char *command);
+    int (*command_options) (struct t_weechat_plugin *plugin,
+                            struct t_gui_buffer *buffer, const char *command,
+                            struct t_hashtable *options);
 
     /* network */
     int (*network_pass_proxy) (const char *proxy, int sock,
@@ -992,9 +1003,8 @@ struct t_weechat_plugin
                                socklen_t address_length);
 
     /* infos */
-    const char *(*info_get) (struct t_weechat_plugin *plugin,
-                             const char *info_name,
-                             const char *arguments);
+    char *(*info_get) (struct t_weechat_plugin *plugin, const char *info_name,
+                       const char *arguments);
     struct t_hashtable *(*info_get_hashtable) (struct t_weechat_plugin *plugin,
                                                const char *info_name,
                                                struct t_hashtable *hashtable);
@@ -1172,6 +1182,9 @@ extern int weechat_plugin_end (struct t_weechat_plugin *plugin);
     (weechat_plugin->strlen_screen)(__string)
 #define weechat_string_match(__string, __mask, __case_sensitive)        \
     (weechat_plugin->string_match)(__string, __mask, __case_sensitive)
+#define weechat_string_match_list(__string, __masks, __case_sensitive)  \
+    (weechat_plugin->string_match_list)(__string, __masks,              \
+                                        __case_sensitive)
 #define weechat_string_replace(__string, __search, __replace)           \
     (weechat_plugin->string_replace)(__string, __search, __replace)
 #define weechat_string_expand_home(__path)                              \
@@ -1205,9 +1218,9 @@ extern int weechat_plugin_end (struct t_weechat_plugin *plugin);
                                            __reference_char,            \
                                            __callback,                  \
                                            __callback_data)
-#define weechat_string_split(__string, __separator, __eol, __max,       \
+#define weechat_string_split(__string, __separator, __flags, __max,     \
                              __num_items)                               \
-    (weechat_plugin->string_split)(__string, __separator, __eol,        \
+    (weechat_plugin->string_split)(__string, __separator, __flags,      \
                                    __max, __num_items)
 #define weechat_string_split_shell(__string, __num_items)               \
     (weechat_plugin->string_split_shell)(__string, __num_items)
@@ -1894,6 +1907,9 @@ extern int weechat_plugin_end (struct t_weechat_plugin *plugin);
 /* command */
 #define weechat_command(__buffer, __command)                            \
     (weechat_plugin->command)(weechat_plugin, __buffer, __command)
+#define weechat_command_options(__buffer, __command, __options)         \
+    (weechat_plugin->command_options)(weechat_plugin, __buffer,         \
+                                      __command, __options)
 
 /* network */
 #define weechat_network_pass_proxy(__proxy, __sock, __address, __port)  \
