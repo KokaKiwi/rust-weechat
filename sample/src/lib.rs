@@ -3,13 +3,15 @@ use std::borrow::Cow;
 use weechat::{
     weechat_plugin, ArgsWeechat, Buffer, CommandDescription, CommandHook,
     Config, ConfigOption, ConfigSectionInfo, NickArgs, StringOption, Weechat,
-    WeechatPlugin, WeechatResult,
+    WeechatPlugin, WeechatResult
 };
+use weechat::bar::BarItem;
 
 struct SamplePlugin {
     weechat: Weechat,
     _rust_hook: CommandHook<String>,
     _rust_config: Config<String>,
+    _item: BarItem
 }
 
 impl SamplePlugin {
@@ -35,6 +37,10 @@ impl SamplePlugin {
     fn option_change_cb(data: &mut String, option: &StringOption) {
         let weechat = option.get_weechat();
         weechat.print("Changing rust option");
+    }
+
+    fn bar_cb(item: &BarItem, buffer: &Buffer) -> String {
+        "rust/sample".to_owned()
     }
 }
 
@@ -116,10 +122,13 @@ impl WeechatPlugin for SamplePlugin {
             None::<String>,
         );
 
+        let item = weechat.new_bar_item("buffer_plugin", SamplePlugin::bar_cb);
+
         Ok(SamplePlugin {
             weechat,
             _rust_hook: command,
             _rust_config: config,
+            _item: item
         })
     }
 }
