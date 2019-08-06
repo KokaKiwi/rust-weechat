@@ -7,39 +7,46 @@ use weechat_sys::{
 
 use crate::{Buffer, LossyCString, Weechat};
 
-struct BarItemCbData {
-    callback: fn(item: &BarItem, buffer: &Buffer) -> String,
+struct BarItemCbData<T> {
+    callback: fn(&T, &LightBarItem, &Buffer) -> String,
+    callback_data: T,
     weechat_ptr: *mut t_weechat_plugin,
 }
 
 /// A handle to a bar item. The bar item is automatically removed when the object is
 /// dropped.
-pub struct BarItem {
-    ptr: *mut t_gui_bar_item,
-    weechat_ptr: *mut t_weechat_plugin,
-    _data: Option<Box<BarItemCbData>>,
+pub struct BarItem<T> {
+    item: LightBarItem,
+    _data: Box<BarItemCbData<T>>,
 }
 
-impl Drop for BarItem {
+/// A handle to a bar item that is passed to callbacks.
+pub struct LightBarItem {
+    ptr: *mut t_gui_bar_item,
+    weechat_ptr: *mut t_weechat_plugin,
+}
+
+impl<T> Drop for BarItem<T> {
     fn drop(&mut self) {
-        // don't unhook the "partial" objects passed to callbacks
-        if self._data.is_none() {
-            return;
-        }
-        let weechat = Weechat::from_ptr(self.weechat_ptr);
+        let weechat = Weechat::from_ptr(self.item.weechat_ptr);
         let bar_item_remove = weechat.get().bar_item_remove.unwrap();
-        unsafe { bar_item_remove(self.ptr) };
+        unsafe { bar_item_remove(self.item.ptr) };
     }
 }
 
 impl Weechat {
+    /// Create a new bar item that can be added by a user.
     // TODO: Provide window object, the callback should accept a Window object wrapping a t_gui_window
-    pub fn new_bar_item(
+    pub fn new_bar_item<T>(
         &self,
         name: &str,
-        callback: fn(item: &BarItem, buffer: &Buffer) -> String,
-    ) -> BarItem {
-        unsafe extern "C" fn c_item_cb(
+        callback: fn(data: &T, item: &LightBarItem, buffer: &Buffer) -> String,
+        callback_data: Option<T>,
+    ) -> BarItem<T>
+    where
+        T: Default,
+    {
+        unsafe extern "C" fn c_item_cb<T>(
             pointer: *const c_void,
             _data: *mut c_void,
             bar_item: *mut t_gui_bar_item,
@@ -47,23 +54,25 @@ impl Weechat {
             buffer: *mut t_gui_buffer,
             _extra_info: *mut t_hashtable,
         ) -> *mut c_char {
-            let data: &mut BarItemCbData =
-                { &mut *(pointer as *mut BarItemCbData) };
+            let data: &mut BarItemCbData<T> =
+                { &mut *(pointer as *mut BarItemCbData<T>) };
             let callback = data.callback;
+            let callback_data = &data.callback_data;
             let buffer = Buffer::from_ptr(data.weechat_ptr, buffer);
 
-            let item = BarItem {
+            let item = LightBarItem {
                 ptr: bar_item,
                 weechat_ptr: data.weechat_ptr,
-                _data: None,
             };
 
+            let ret = callback(&callback_data, &item, &buffer);
             // weechat wants malloc'ed string
-            libc::strdup(LossyCString::new(callback(&item, &buffer)).as_ptr())
+            libc::strdup(LossyCString::new(ret).as_ptr())
         }
 
-        let data = Box::new(BarItemCbData {
+        let data = Box::new(BarItemCbData::<T> {
             callback,
+            callback_data: callback_data.unwrap_or_default(),
             weechat_ptr: self.ptr,
         });
 
@@ -76,7 +85,7 @@ impl Weechat {
             bar_item_new(
                 self.ptr,
                 bar_item_name.as_ptr(),
-                Some(c_item_cb),
+                Some(c_item_cb::<T>),
                 data_ref as *const _ as *const c_void,
                 ptr::null_mut(),
             )
@@ -85,9 +94,11 @@ impl Weechat {
         let hook_data = unsafe { Box::from_raw(data_ref) };
 
         BarItem {
-            ptr: hook_ptr,
-            weechat_ptr: self.ptr,
-            _data: Some(hook_data),
+            item: LightBarItem {
+                ptr: hook_ptr,
+                weechat_ptr: self.ptr,
+            },
+            _data: hook_data,
         }
     }
 
