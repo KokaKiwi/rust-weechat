@@ -1,5 +1,7 @@
 #![warn(missing_docs)]
 
+//! A module providing a typed api for Weechat configuration files
+
 use crate::Weechat;
 use std::borrow::Cow;
 use weechat_sys::{t_config_option, t_weechat_plugin};
@@ -41,15 +43,20 @@ impl Default for OptionType {
     }
 }
 
+/// A trait that defines common behavior for the different data types of config options.
 pub trait ConfigOption {
+    /// Returns the weechat object that this config option was created with.
     fn get_weechat(&self) -> Weechat;
+    /// Returns the raw pointer to the config option.
     fn get_ptr(&self) -> *mut t_config_option;
 
+    /// Constructs a ConfigOption from its raw pointer and a weechat pointer.
     fn from_ptrs(
         ptr: *mut t_config_option,
         weechat_ptr: *mut t_weechat_plugin,
     ) -> Self;
 
+    /// Resets the option to its default value.
     fn reset(&self, run_callback: bool) {
         let weechat = self.get_weechat();
         let option_reset = weechat.get().config_option_reset.unwrap();
@@ -69,21 +76,25 @@ pub(crate) struct OptionPointers<T, A, B, C> {
     pub(crate) delete_cb_data: C,
 }
 
+/// A config option with a string value.
 pub struct StringOption {
     pub(crate) ptr: *mut t_config_option,
     pub(crate) weechat_ptr: *mut t_weechat_plugin,
 }
 
+/// A config option with a boolean value.
 pub struct BooleanOption {
     pub(crate) ptr: *mut t_config_option,
     pub(crate) weechat_ptr: *mut t_weechat_plugin,
 }
 
+/// A config option with a integer value.
 pub struct IntegerOption {
     pub(crate) ptr: *mut t_config_option,
     pub(crate) weechat_ptr: *mut t_weechat_plugin,
 }
 
+/// A config option with a color value.
 pub struct ColorOption {
     pub(crate) ptr: *mut t_config_option,
     pub(crate) weechat_ptr: *mut t_weechat_plugin,

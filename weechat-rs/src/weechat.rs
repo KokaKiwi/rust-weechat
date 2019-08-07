@@ -61,14 +61,18 @@ impl DoubleEndedIterator for ArgsWeechat {
 
 /// Status for updating options
 pub enum OptionChanged {
+    /// The option was successfully changed.
     Changed = weechat_sys::WEECHAT_CONFIG_OPTION_SET_OK_CHANGED as isize,
+    /// The options value has not changed.
     Unchanged = weechat_sys::WEECHAT_CONFIG_OPTION_SET_OK_SAME_VALUE as isize,
+    /// The option was not found.
     NotFound = weechat_sys::WEECHAT_CONFIG_OPTION_SET_OPTION_NOT_FOUND as isize,
+    /// An error occurred changing the value.
     Error = weechat_sys::WEECHAT_CONFIG_OPTION_SET_ERROR as isize,
 }
 
 impl OptionChanged {
-    pub fn from_int(v: i32) -> OptionChanged {
+    pub(crate) fn from_int(v: i32) -> OptionChanged {
         use OptionChanged::*;
         match v {
             weechat_sys::WEECHAT_CONFIG_OPTION_SET_OK_CHANGED => Changed,

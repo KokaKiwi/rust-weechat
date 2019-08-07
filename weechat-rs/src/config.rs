@@ -39,26 +39,40 @@ pub struct ConfigSection {
     weechat_ptr: *mut t_weechat_plugin,
 }
 
+/// Represents the options when creating a new config section.
 #[derive(Default)]
 pub struct ConfigSectionInfo<'a, T> {
+    /// Name of the config section
     pub name: &'a str,
 
+    /// Can the user create new options?
     pub user_can_add_options: bool,
+    /// Can the user delete options?
     pub user_can_delete_option: bool,
 
+    /// A function called when an option from the section is read from the disk
     pub read_callback: Option<fn(&T)>,
+    /// Data passed to the `read_callback`
     pub read_callback_data: Option<T>,
 
-    pub write_callbck: Option<fn(&T)>,
+    /// A function called when the section is written to the disk
+    pub write_callback: Option<fn(&T)>,
+    /// Data passed to the `write_callback`
     pub write_callback_data: Option<T>,
 
-    pub write_default_callbck: Option<fn(&T)>,
+    /// A function called when default values for the section must be written to the disk
+    pub write_default_callback: Option<fn(&T)>,
+    /// Data passed to the `write_default_callback`
     pub write_default_callback_data: Option<T>,
 
+    /// A function called when a new option is created in the section
     pub create_option_callback: Option<fn(&T)>,
+    /// Data passed to the `create_option_callback`
     pub create_option_callback_data: Option<T>,
 
+    /// A function called when an option is deleted in the section
     pub delete_option_callback: Option<fn(&T)>,
+    /// Data passed to the `delete_option_callback`
     pub delete_option_callback_data: Option<T>,
 }
 
@@ -93,7 +107,6 @@ impl Drop for ConfigSection {
 
 impl<T> Config<T> {
     /// Create a new section in the configuration file.
-    /// * `name` - name of the new section.
     pub fn new_section<S: Default>(
         &mut self,
         section_info: ConfigSectionInfo<S>,
@@ -162,8 +175,7 @@ type WeechatOptCheckCbT = unsafe extern "C" fn(
 ) -> c_int;
 
 impl ConfigSection {
-    /// Create a new Weechat configuration option.
-    /// * `name` - Name of the new option
+    /// Create a new string Weechat configuration option.
     pub fn new_string_option<D>(
         &self,
         name: &str,
@@ -200,6 +212,7 @@ impl ConfigSection {
         }
     }
 
+    /// Create a new integer Weechat configuration option.
     pub fn new_integer_option<D>(
         &self,
         name: &str,
