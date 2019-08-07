@@ -34,7 +34,7 @@ impl SamplePlugin {
         }
     }
 
-    fn option_change_cb(data: &mut String, option: &StringOption) {
+    fn option_change_cb(_data: &mut String, option: &StringOption) {
         let weechat = option.get_weechat();
         weechat.print("Changing rust option");
     }

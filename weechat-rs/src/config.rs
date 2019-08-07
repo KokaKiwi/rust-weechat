@@ -9,14 +9,14 @@ use std::os::raw::c_void;
 use std::ptr;
 
 use crate::config_options::{
-    ConfigOption, IntegerOption, OptionDescription, OptionPointers, OptionType,
-    StringOption,
+    BooleanOption, ColorOption, ConfigOption, IntegerOption, OptionDescription,
+    OptionPointers, OptionType, StringOption,
 };
 use crate::{LossyCString, Weechat};
 use std::borrow::Cow;
 use weechat_sys::{
     t_config_file, t_config_option, t_config_section, t_weechat_plugin,
-    WEECHAT_RC_ERROR, WEECHAT_RC_OK,
+    WEECHAT_RC_OK,
 };
 
 /// Weechat configuration file
@@ -111,17 +111,6 @@ impl<T> Config<T> {
         &mut self,
         section_info: ConfigSectionInfo<S>,
     ) -> &ConfigSection {
-        unsafe extern "C" fn c_read_cb<S>(
-            pointer: *const c_void,
-            _data: *mut c_void,
-            _config: *mut t_config_file,
-            _section: *mut t_config_section,
-            option_name: *mut *mut c_char,
-            value: *mut *mut c_char,
-        ) -> c_int {
-            WEECHAT_RC_OK
-        }
-
         let weechat = Weechat::from_ptr(self.weechat_ptr);
 
         let new_section = weechat.get().config_new_section.unwrap();
@@ -212,6 +201,45 @@ impl ConfigSection {
         }
     }
 
+    /// Create a new boolean Weechat configuration option.
+    pub fn new_boolean_option<D>(
+        &self,
+        name: &str,
+        description: &str,
+        default_value: bool,
+        value: bool,
+        null_allowed: bool,
+        change_cb: Option<fn(&mut D, &BooleanOption)>,
+        change_cb_data: Option<D>,
+    ) -> BooleanOption
+    where
+        D: Default,
+    {
+        let value = if value { "on" } else { "off" };
+        let default_value = if default_value { "on" } else { "off" };
+        let ptr = self.new_option(
+            OptionDescription {
+                name,
+                description,
+                option_type: OptionType::Boolean,
+                default_value,
+                value,
+                null_allowed,
+                ..Default::default()
+            },
+            None,
+            None::<String>,
+            change_cb,
+            change_cb_data,
+            None,
+            None::<String>,
+        );
+        BooleanOption {
+            ptr,
+            weechat_ptr: self.weechat_ptr,
+        }
+    }
+
     /// Create a new integer Weechat configuration option.
     pub fn new_integer_option<D>(
         &self,
@@ -249,6 +277,43 @@ impl ConfigSection {
             None::<String>,
         );
         IntegerOption {
+            ptr,
+            weechat_ptr: self.weechat_ptr,
+        }
+    }
+
+    /// Create a new color Weechat configuration option.
+    pub fn new_color_option<D>(
+        &self,
+        name: &str,
+        description: &str,
+        default_value: &str,
+        value: &str,
+        null_allowed: bool,
+        change_cb: Option<fn(&mut D, &ColorOption)>,
+        change_cb_data: Option<D>,
+    ) -> ColorOption
+    where
+        D: Default,
+    {
+        let ptr = self.new_option(
+            OptionDescription {
+                name,
+                description,
+                option_type: OptionType::Color,
+                default_value,
+                value,
+                null_allowed,
+                ..Default::default()
+            },
+            None,
+            None::<String>,
+            change_cb,
+            change_cb_data,
+            None,
+            None::<String>,
+        );
+        ColorOption {
             ptr,
             weechat_ptr: self.weechat_ptr,
         }
@@ -391,7 +456,7 @@ impl ConfigSection {
                 c_change_cb,
                 option_pointers_ref as *const _ as *const c_void,
                 ptr::null_mut(),
-                None,
+                c_delete_cb,
                 option_pointers_ref as *const _ as *const c_void,
                 ptr::null_mut(),
             )

@@ -8,8 +8,7 @@ use std::ffi::CStr;
 use std::os::raw::c_void;
 use std::ptr;
 use weechat_sys::{
-    t_gui_buffer, t_gui_nick, t_gui_nick_group, t_weechat_plugin,
-    WEECHAT_RC_ERROR, WEECHAT_RC_OK,
+    t_gui_buffer, t_gui_nick, t_gui_nick_group, t_weechat_plugin, WEECHAT_RC_OK,
 };
 
 /// A high level Buffer type encapsulating weechats C buffer pointer.
@@ -259,7 +258,7 @@ impl Nick {
 /// Weechat nicklist Group type.
 pub struct NickGroup {
     pub(crate) ptr: *mut t_gui_nick_group,
-    buf_ptr: *mut t_gui_buffer,
+    _buf_ptr: *mut t_gui_buffer,
 }
 
 impl<'a> Default for NickArgs<'a> {
@@ -349,7 +348,7 @@ impl Buffer {
             } else {
                 Some(NickGroup {
                     ptr: group,
-                    buf_ptr: self.ptr,
+                    _buf_ptr: self.ptr,
                 })
             }
         }
@@ -455,7 +454,7 @@ impl Buffer {
 
         NickGroup {
             ptr: group_ptr,
-            buf_ptr: self.ptr,
+            _buf_ptr: self.ptr,
         }
     }
 
