@@ -4,6 +4,7 @@
 
 use crate::Weechat;
 use std::borrow::Cow;
+use std::ffi::CStr;
 use weechat_sys::{t_config_option, t_weechat_plugin};
 
 #[derive(Default)]
@@ -45,6 +46,8 @@ impl Default for OptionType {
 
 /// A trait that defines common behavior for the different data types of config options.
 pub trait ConfigOption {
+    type R;
+
     /// Returns the weechat object that this config option was created with.
     fn get_weechat(&self) -> Weechat;
     /// Returns the raw pointer to the config option.
@@ -55,6 +58,8 @@ pub trait ConfigOption {
         ptr: *mut t_config_option,
         weechat_ptr: *mut t_weechat_plugin,
     ) -> Self;
+
+    fn value(&self) -> Self::R;
 
     /// Resets the option to its default value.
     fn reset(&self, run_callback: bool) -> crate::OptionChanged {
@@ -102,6 +107,10 @@ pub struct ColorOption {
 }
 
 impl ConfigOption for StringOption {
+    /// TODO how to avoid copying here without turning the whole trait into a
+    /// mess with explicit lifetimes.
+    type R = String;
+
     fn get_weechat(&self) -> Weechat {
         Weechat::from_ptr(self.weechat_ptr)
     }
@@ -114,9 +123,20 @@ impl ConfigOption for StringOption {
     ) -> StringOption {
         StringOption { ptr, weechat_ptr }
     }
+
+    fn value(&self) -> Self::R {
+        let weechat = self.get_weechat();
+        let config_string = weechat.get().config_string.unwrap();
+        unsafe {
+            let string = config_string(self.get_ptr());
+            CStr::from_ptr(string).to_string_lossy().to_string()
+        }
+    }
 }
 
 impl ConfigOption for BooleanOption {
+    type R = bool;
+
     fn get_weechat(&self) -> Weechat {
         Weechat::from_ptr(self.weechat_ptr)
     }
@@ -129,9 +149,18 @@ impl ConfigOption for BooleanOption {
     ) -> BooleanOption {
         BooleanOption { ptr, weechat_ptr }
     }
+
+    fn value(&self) -> Self::R {
+        let weechat = self.get_weechat();
+        let config_boolean = weechat.get().config_boolean.unwrap();
+        let ret = unsafe { config_boolean(self.get_ptr()) };
+        ret != 0
+    }
 }
 
 impl ConfigOption for IntegerOption {
+    type R = i32;
+
     fn get_weechat(&self) -> Weechat {
         Weechat::from_ptr(self.weechat_ptr)
     }
@@ -144,9 +173,17 @@ impl ConfigOption for IntegerOption {
     ) -> IntegerOption {
         IntegerOption { ptr, weechat_ptr }
     }
+
+    fn value(&self) -> Self::R {
+        let weechat = self.get_weechat();
+        let config_integer = weechat.get().config_integer.unwrap();
+        unsafe { config_integer(self.get_ptr()) }
+    }
 }
 
 impl ConfigOption for ColorOption {
+    type R = String;
+
     fn get_weechat(&self) -> Weechat {
         Weechat::from_ptr(self.weechat_ptr)
     }
@@ -158,5 +195,20 @@ impl ConfigOption for ColorOption {
         weechat_ptr: *mut t_weechat_plugin,
     ) -> ColorOption {
         ColorOption { ptr, weechat_ptr }
+    }
+
+    fn value(&self) -> Self::R {
+        let weechat = self.get_weechat();
+        let config_color = weechat.get().config_color.unwrap();
+        unsafe {
+            let string = config_color(self.get_ptr());
+            CStr::from_ptr(string).to_string_lossy().to_string()
+        }
+    }
+}
+
+impl PartialEq<bool> for BooleanOption {
+    fn eq(&self, other: &bool) -> bool {
+        self.value() == *other
     }
 }
