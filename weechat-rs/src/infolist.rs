@@ -1,5 +1,3 @@
-#![warn(missing_docs)]
-
 //! Weechat Infolist module.
 
 use std::ffi::CStr;

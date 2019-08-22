@@ -1,5 +1,3 @@
-#![warn(missing_docs)]
-
 //! Weechat Configuration module
 
 use libc::{c_char, c_int};

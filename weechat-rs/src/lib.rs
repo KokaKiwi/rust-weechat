@@ -1,3 +1,5 @@
+#![warn(missing_docs)]
+
 pub mod bar;
 pub mod buffer;
 pub mod completion;

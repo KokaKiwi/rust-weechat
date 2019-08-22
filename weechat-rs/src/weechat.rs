@@ -1,5 +1,3 @@
-#![warn(missing_docs)]
-
 //! Main weechat module
 
 use weechat_sys::t_weechat_plugin;

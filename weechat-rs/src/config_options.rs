@@ -1,5 +1,3 @@
-#![warn(missing_docs)]
-
 //! A module providing a typed api for Weechat configuration files
 
 use crate::Weechat;

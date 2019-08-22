@@ -1,5 +1,3 @@
-#![warn(missing_docs)]
-
 //! Weechat Hook module.
 //! Weechat hooks are used for many different things, to create commands, to
 //! listen to events on a file descriptor, add completions to weechat, etc.

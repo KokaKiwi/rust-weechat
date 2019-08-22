@@ -1,5 +1,3 @@
-#![warn(missing_docs)]
-
 //! Weechat Buffer module containing Buffer and Nick types.
 use crate::{LossyCString, Weechat};
 use libc::{c_char, c_int};
