@@ -317,7 +317,7 @@ impl ConfigSection {
         }
     }
 
-    fn new_option<T, A, B, C>(
+    fn new_option<'a, T, A, B, C>(
         &self,
         option_description: OptionDescription,
         check_cb: Option<fn(&mut A, &T, Cow<str>)>,
@@ -328,7 +328,7 @@ impl ConfigSection {
         delete_cb_data: Option<C>,
     ) -> *mut t_config_option
     where
-        T: ConfigOption,
+        T: ConfigOption<'static>,
         A: Default,
         B: Default,
         C: Default,
@@ -340,7 +340,7 @@ impl ConfigSection {
             value: *const c_char,
         ) -> c_int
         where
-            T: ConfigOption,
+            T: ConfigOption<'static>,
         {
             let value = CStr::from_ptr(value).to_string_lossy();
             let pointers: &mut OptionPointers<T, A, B, C> =
@@ -362,7 +362,7 @@ impl ConfigSection {
             _data: *mut c_void,
             option_pointer: *mut t_config_option,
         ) where
-            T: ConfigOption,
+            T: ConfigOption<'static>,
         {
             let pointers: &mut OptionPointers<T, A, B, C> =
                 { &mut *(pointer as *mut OptionPointers<T, A, B, C>) };
@@ -381,7 +381,7 @@ impl ConfigSection {
             _data: *mut c_void,
             option_pointer: *mut t_config_option,
         ) where
-            T: ConfigOption,
+            T: ConfigOption<'static>,
         {
             let pointers: &mut OptionPointers<T, A, B, C> =
                 { &mut *(pointer as *mut OptionPointers<T, A, B, C>) };

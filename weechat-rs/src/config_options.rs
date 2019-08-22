@@ -43,7 +43,7 @@ impl Default for OptionType {
 }
 
 /// A trait that defines common behavior for the different data types of config options.
-pub trait ConfigOption {
+pub trait ConfigOption<'a> {
     type R;
 
     /// Returns the weechat object that this config option was created with.
@@ -57,7 +57,8 @@ pub trait ConfigOption {
         weechat_ptr: *mut t_weechat_plugin,
     ) -> Self;
 
-    fn value(&self) -> Self::R;
+    /// Get the value of the option.
+    fn value(&'a self) -> Self::R;
 
     /// Resets the option to its default value.
     fn reset(&self, run_callback: bool) -> crate::OptionChanged {
@@ -104,10 +105,8 @@ pub struct ColorOption {
     pub(crate) weechat_ptr: *mut t_weechat_plugin,
 }
 
-impl ConfigOption for StringOption {
-    /// TODO how to avoid copying here without turning the whole trait into a
-    /// mess with explicit lifetimes.
-    type R = String;
+impl<'a> ConfigOption<'a> for StringOption {
+    type R = Cow<'a, str>;
 
     fn get_weechat(&self) -> Weechat {
         Weechat::from_ptr(self.weechat_ptr)
@@ -127,12 +126,12 @@ impl ConfigOption for StringOption {
         let config_string = weechat.get().config_string.unwrap();
         unsafe {
             let string = config_string(self.get_ptr());
-            CStr::from_ptr(string).to_string_lossy().to_string()
+            CStr::from_ptr(string).to_string_lossy()
         }
     }
 }
 
-impl ConfigOption for BooleanOption {
+impl<'a> ConfigOption<'a> for BooleanOption {
     type R = bool;
 
     fn get_weechat(&self) -> Weechat {
@@ -156,7 +155,7 @@ impl ConfigOption for BooleanOption {
     }
 }
 
-impl ConfigOption for IntegerOption {
+impl<'a> ConfigOption<'a> for IntegerOption {
     type R = i32;
 
     fn get_weechat(&self) -> Weechat {
@@ -179,8 +178,8 @@ impl ConfigOption for IntegerOption {
     }
 }
 
-impl ConfigOption for ColorOption {
-    type R = String;
+impl<'a> ConfigOption<'a> for ColorOption {
+    type R = Cow<'a, str>;
 
     fn get_weechat(&self) -> Weechat {
         Weechat::from_ptr(self.weechat_ptr)
@@ -195,12 +194,12 @@ impl ConfigOption for ColorOption {
         ColorOption { ptr, weechat_ptr }
     }
 
-    fn value(&self) -> Self::R {
+    fn value(&'a self) -> Self::R {
         let weechat = self.get_weechat();
         let config_color = weechat.get().config_color.unwrap();
         unsafe {
             let string = config_color(self.get_ptr());
-            CStr::from_ptr(string).to_string_lossy().to_string()
+            CStr::from_ptr(string).to_string_lossy()
         }
     }
 }
