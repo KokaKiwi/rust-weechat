@@ -67,7 +67,7 @@ struct timeval;
  * please change the date with current one; for a second change at same
  * date, increment the 01, otherwise please keep 01.
  */
-#define WEECHAT_PLUGIN_API_VERSION "20190413-01"
+#define WEECHAT_PLUGIN_API_VERSION "20190810-01"
 
 /* macros for defining plugin infos */
 #define WEECHAT_PLUGIN_NAME(__name)                                     \
@@ -261,6 +261,9 @@ struct t_weechat_plugin
     int priority;                      /* plugin priority (default is 1000) */
     int initialized;                   /* plugin initialized? (init called) */
     int debug;                         /* debug level for plugin (0=off)    */
+    int upgrading;                     /* 1 if the plugin must load upgrade */
+                                       /* info on startup (if weechat is    */
+                                       /* run with --upgrade)               */
     struct t_hashtable *variables;     /* plugin custom variables           */
     struct t_weechat_plugin *prev_plugin; /* link to previous plugin        */
     struct t_weechat_plugin *next_plugin; /* link to next plugin            */
@@ -322,7 +325,8 @@ struct t_weechat_plugin
                                                      const char *text),
                                    void *callback_data);
     char **(*string_split) (const char *string, const char *separators,
-                            int flags, int num_items_max, int *num_items);
+                            const char *strip_items, int flags,
+                            int num_items_max, int *num_items);
     char **(*string_split_shell) (const char *string, int *num_items);
     void (*string_free_split) (char **split_string);
     char *(*string_build_with_split_string) (const char **split_string,
@@ -405,6 +409,7 @@ struct t_weechat_plugin
     struct t_weelist_item *(*list_next) (struct t_weelist_item *item);
     struct t_weelist_item *(*list_prev) (struct t_weelist_item *item);
     const char *(*list_string) (struct t_weelist_item *item);
+    void *(*list_user_data) (struct t_weelist_item *item);
     int (*list_size) (struct t_weelist *weelist);
     void (*list_remove) (struct t_weelist *weelist,
                          struct t_weelist_item *item);
@@ -1218,9 +1223,10 @@ extern int weechat_plugin_end (struct t_weechat_plugin *plugin);
                                            __reference_char,            \
                                            __callback,                  \
                                            __callback_data)
-#define weechat_string_split(__string, __separator, __flags, __max,     \
-                             __num_items)                               \
-    (weechat_plugin->string_split)(__string, __separator, __flags,      \
+#define weechat_string_split(__string, __separators, __strip_items,     \
+                             __flags, __max, __num_items)               \
+    (weechat_plugin->string_split)(__string, __separators,              \
+                                   __strip_items, __flags,              \
                                    __max, __num_items)
 #define weechat_string_split_shell(__string, __num_items)               \
     (weechat_plugin->string_split_shell)(__string, __num_items)
@@ -1352,6 +1358,8 @@ extern int weechat_plugin_end (struct t_weechat_plugin *plugin);
     (weechat_plugin->list_prev)(__item)
 #define weechat_list_string(__item)                                     \
     (weechat_plugin->list_string)(__item)
+#define weechat_list_user_data(__item)                                  \
+    (weechat_plugin->list_user_data)(__item)
 #define weechat_list_size(__list)                                       \
     (weechat_plugin->list_size)(__list)
 #define weechat_list_remove(__list, __item)                             \
